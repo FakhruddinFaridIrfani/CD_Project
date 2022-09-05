@@ -21,7 +21,7 @@ public class SdnID {
 
 
     @NotNull
-    @Column(name = "sdnEntry_id")
+    @Column(name = "sdn_entry_id")
     private int sdnEntry_id;
 
 

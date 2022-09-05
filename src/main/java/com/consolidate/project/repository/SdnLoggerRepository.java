@@ -1,7 +1,7 @@
 package com.consolidate.project.repository;
 
-import com.consolidate.project.model.SdnCitizenship;
-import com.consolidate.project.model.SdnPOB;
+import com.consolidate.project.model.SdnAka;
+import com.consolidate.project.model.SdnLogger;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,9 +12,8 @@ import javax.transaction.Transactional;
 
 @Repository
 @Transactional
-public interface SdnCitizenshipRepository extends JpaRepository<SdnCitizenship, Integer> {
+public interface SdnLoggerRepository extends JpaRepository<SdnLogger, Integer> {
 
-    @Modifying
-    @Query(value = "DELETE FROM cd.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
-    void deleteCitizenshipBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
+
+
 }

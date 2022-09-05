@@ -11,7 +11,7 @@ import java.util.Date;
 @Table(name = "sdn_entry", schema = "cd")
 public class SdnEntry {
     @Id
-    @Column(name = "sdnEntry_id", columnDefinition = "serial")
+    @Column(name = "sdn_entry_id", columnDefinition = "serial")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int sdnEntry_id;
 

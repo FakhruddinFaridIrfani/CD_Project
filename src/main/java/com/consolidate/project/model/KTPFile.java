@@ -8,12 +8,12 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "sdn_nationality", schema = "cd")
-public class SdnNationality {
+@Table(name = "ktp_file", schema = "cd")
+public class KTPFile {
     @Id
-    @Column(name = "sdn_nationality_id", columnDefinition = "serial")
+    @Column(name = "ktpfile_id", columnDefinition = "serial")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int sdn_nationality_id;
+    private int ktpfile_id;
 
     @NotNull
     @Column(name = "status")
@@ -21,23 +21,19 @@ public class SdnNationality {
 
 
     @NotNull
-    @Column(name = "sdn_entry_id")
-    private int sdnEntry_id;
+    @Column(name = "file_name_ori")
+    private String file_name_ori;
 
 
     @NotNull
-    @Column(name = "uid")
-    private int uid;
+    @Column(name = "file_name_save")
+    private String file_name_save;
+
+
+    @Column(name = "remarks")
+    private String remarks;
 
     @NotNull
-    @Column(name = "country")
-    private String country;
-
-    @NotNull
-    @Column(name = "main_entry")
-    private String main_entry;
-
-
     @Column(name = "created_by")
     private String created_by;
 
@@ -57,12 +53,13 @@ public class SdnNationality {
     @Column(name = "updated_date")
     private Date updated_date;
 
-    public int getSdn_nationality_id() {
-        return sdn_nationality_id;
+
+    public int getKtpfile_id() {
+        return ktpfile_id;
     }
 
-    public void setSdn_nationality_id(int sdn_nationality_id) {
-        this.sdn_nationality_id = sdn_nationality_id;
+    public void setKtpfile_id(int ktpfile_id) {
+        this.ktpfile_id = ktpfile_id;
     }
 
     public String getStatus() {
@@ -73,36 +70,28 @@ public class SdnNationality {
         this.status = status;
     }
 
-    public int getSdnEntry_id() {
-        return sdnEntry_id;
+    public String getFile_name_ori() {
+        return file_name_ori;
     }
 
-    public void setSdnEntry_id(int sdnEntry_id) {
-        this.sdnEntry_id = sdnEntry_id;
+    public void setFile_name_ori(String file_name_ori) {
+        this.file_name_ori = file_name_ori;
     }
 
-    public int getUid() {
-        return uid;
+    public String getFile_name_save() {
+        return file_name_save;
     }
 
-    public void setUid(int uid) {
-        this.uid = uid;
+    public void setFile_name_save(String file_name_save) {
+        this.file_name_save = file_name_save;
     }
 
-    public String getCountry() {
-        return country;
+    public String getRemarks() {
+        return remarks;
     }
 
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getMain_entry() {
-        return main_entry;
-    }
-
-    public void setMain_entry(String main_entry) {
-        this.main_entry = main_entry;
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
     public String getCreated_by() {

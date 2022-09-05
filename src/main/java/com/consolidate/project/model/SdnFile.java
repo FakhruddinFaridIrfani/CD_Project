@@ -2,13 +2,14 @@ package com.consolidate.project.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.validation.constraints.NotNull;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "sdn_file",schema = "cd")
+@Table(name = "sdn_file", schema = "cd")
 public class SdnFile {
     @Id
     @Column(name = "sdnfile_id", columnDefinition = "serial")
@@ -36,6 +37,9 @@ public class SdnFile {
     @NotNull
     @Column(name = "file_comparison_group")
     private String file_comparison_group;
+
+    @Column(name = "remarks")
+    private String remarks;
 
     @NotNull
     @Column(name = "created_by")
@@ -136,5 +140,13 @@ public class SdnFile {
 
     public void setUpdated_date(Date updated_date) {
         this.updated_date = updated_date;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

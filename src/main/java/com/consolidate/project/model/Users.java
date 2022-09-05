@@ -8,21 +8,41 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "role", schema = "cd")
-public class Role {
+@Table(name = "users", schema = "cd")
+public class Users {
     @Id
-    @Column(name = "role_id", columnDefinition = "serial")
+    @Column(name = "user_id", columnDefinition = "serial")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int role_id;
+    private int user_id;
 
 
     @NotNull
-    @Column(name = "role_name")
-    private String role_name;
+    @Column(name = "user_name")
+    private String user_name;
+
+
+    @NotNull
+    @Column(name = "user_full_name")
+    private String user_full_name;
+
+    @NotNull
+    @Column(name = "user_password")
+    private String user_password;
+
+    @NotNull
+    @Column(name = "user_organization")
+    private String user_organization;
+
+    @NotNull
+    @Column(name = "role_id")
+    private int role_id;
 
     @NotNull
     @Column(name = "status")
     private String status;
+
+    @Column(name = "user_token")
+    private String user_token;
 
 
     @Column(name = "created_by")
@@ -44,20 +64,52 @@ public class Role {
     @Column(name = "updated_date")
     private Date updated_date;
 
+    public int getUser_id() {
+        return user_id;
+    }
+
+    public void setUser_id(int user_id) {
+        this.user_id = user_id;
+    }
+
+    public String getUser_name() {
+        return user_name;
+    }
+
+    public void setUser_name(String user_name) {
+        this.user_name = user_name;
+    }
+
+    public String getUser_full_name() {
+        return user_full_name;
+    }
+
+    public void setUser_full_name(String user_full_name) {
+        this.user_full_name = user_full_name;
+    }
+
+    public String getUser_password() {
+        return user_password;
+    }
+
+    public void setUser_password(String user_password) {
+        this.user_password = user_password;
+    }
+
+    public String getUser_organization() {
+        return user_organization;
+    }
+
+    public void setUser_organization(String user_organization) {
+        this.user_organization = user_organization;
+    }
+
     public int getRole_id() {
         return role_id;
     }
 
     public void setRole_id(int role_id) {
         this.role_id = role_id;
-    }
-
-    public String getRole_name() {
-        return role_name;
-    }
-
-    public void setRole_name(String role_name) {
-        this.role_name = role_name;
     }
 
     public String getStatus() {
@@ -98,5 +150,13 @@ public class Role {
 
     public void setUpdated_date(Date updated_date) {
         this.updated_date = updated_date;
+    }
+
+    public String getUser_token() {
+        return user_token;
+    }
+
+    public void setUser_token(String user_token) {
+        this.user_token = user_token;
     }
 }

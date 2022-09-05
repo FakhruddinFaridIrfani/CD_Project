@@ -2,7 +2,8 @@ package com.consolidate.project.controller;
 
 
 import com.consolidate.project.model.BaseResponse;
-import com.consolidate.project.service.CdService;
+import com.consolidate.project.service.DataService;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -22,8 +23,8 @@ import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("sdn")
-public class SdnController {
+@RequestMapping("data")
+public class DataController {
 
     @Value("${sftp.user.name}")
     private String sftpUser;
@@ -35,14 +36,42 @@ public class SdnController {
     private String sftpUrl;
 
     @Autowired
-    CdService cdService;
-    Logger logger = LoggerFactory.getLogger(SdnController.class);
+    DataService dataService;
+    Logger logger = LoggerFactory.getLogger(DataController.class);
 
 
-    @PostMapping("/uploadSdnFile")
-    public BaseResponse<String> uploadSdnFile(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
-        logger.info("Upload sdn file");
-        return cdService.uploadSdnFile(input);
+    @PostMapping("/uploadFile")
+    public BaseResponse<String> uploadFile(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+
+        BaseResponse response = new BaseResponse();
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            String file_type = jsonInput.getString("file_type");
+            logger.info("Upload file : " + file_type.toUpperCase());
+            if (file_type.compareToIgnoreCase("sdn") == 0 || file_type.compareToIgnoreCase("consal") == 0) {
+                response = dataService.uploadSdnFile(input);
+            } else if (file_type.compareToIgnoreCase("ktp") == 0) {
+                response = dataService.uploadKtpFile(input);
+            } else if (file_type.compareToIgnoreCase("dma") == 0) {
+                response = dataService.uploadDmaFile(input);
+            } else {
+                response.setSuccess(false);
+                response.setStatus("500");
+                response.setMessage("Failed to upload : Unknown file type");
+            }
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setStatus("500");
+            response.setMessage("Failed to upload : " + e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/checkUpload")
+    public BaseResponse<String> checkUpload(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+        logger.info("Check file on process");
+        String file_type = new JSONObject(input).getString("file_type");
+        return dataService.checkUploadingOrMatchingFile(file_type);
     }
 
     @GetMapping("/ping")
@@ -98,10 +127,10 @@ public class SdnController {
 
 
     @PostMapping("/addFile")
-    public BaseResponse<Map<String,String>> addFile(@RequestBody String input) throws Exception {
+    public BaseResponse<Map<String, String>> addFile(@RequestBody String input) throws Exception {
         logger.info(new Date().getTime() + " : Add File test");
         BaseResponse baseResponse = new BaseResponse<>();
         JSONObject jsonObject = new JSONObject(input);
-        return cdService.addFile(jsonObject.optString("file_name"), jsonObject.optString("file_content"), jsonObject.optString("folder"));
+        return dataService.addFile(jsonObject.optString("file_name"), jsonObject.optString("file_content"), jsonObject.optString("folder"));
     }
 }

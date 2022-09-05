@@ -8,36 +8,27 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "sdn_nationality", schema = "cd")
-public class SdnNationality {
+@Table(name = "dma_detail", schema = "cd")
+public class DMADetail {
     @Id
-    @Column(name = "sdn_nationality_id", columnDefinition = "serial")
+    @Column(name = "dmadetail_id", columnDefinition = "serial")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int sdn_nationality_id;
+    private int dmadetail_id;
+
+    @NotNull
+    @Column(name = "dmafile_id")
+    private int dmafile_id;
 
     @NotNull
     @Column(name = "status")
     private String status;
 
+    @NotNull
+    @Column(name = "merchant_no")
+    private String merchant_no;
+
 
     @NotNull
-    @Column(name = "sdn_entry_id")
-    private int sdnEntry_id;
-
-
-    @NotNull
-    @Column(name = "uid")
-    private int uid;
-
-    @NotNull
-    @Column(name = "country")
-    private String country;
-
-    @NotNull
-    @Column(name = "main_entry")
-    private String main_entry;
-
-
     @Column(name = "created_by")
     private String created_by;
 
@@ -57,12 +48,20 @@ public class SdnNationality {
     @Column(name = "updated_date")
     private Date updated_date;
 
-    public int getSdn_nationality_id() {
-        return sdn_nationality_id;
+    public int getDmadetail_id() {
+        return dmadetail_id;
     }
 
-    public void setSdn_nationality_id(int sdn_nationality_id) {
-        this.sdn_nationality_id = sdn_nationality_id;
+    public void setDmadetail_id(int dmadetail_id) {
+        this.dmadetail_id = dmadetail_id;
+    }
+
+    public int getDmafile_id() {
+        return dmafile_id;
+    }
+
+    public void setDmafile_id(int dmafile_id) {
+        this.dmafile_id = dmafile_id;
     }
 
     public String getStatus() {
@@ -73,36 +72,12 @@ public class SdnNationality {
         this.status = status;
     }
 
-    public int getSdnEntry_id() {
-        return sdnEntry_id;
+    public String getMerchant_no() {
+        return merchant_no;
     }
 
-    public void setSdnEntry_id(int sdnEntry_id) {
-        this.sdnEntry_id = sdnEntry_id;
-    }
-
-    public int getUid() {
-        return uid;
-    }
-
-    public void setUid(int uid) {
-        this.uid = uid;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getMain_entry() {
-        return main_entry;
-    }
-
-    public void setMain_entry(String main_entry) {
-        this.main_entry = main_entry;
+    public void setMerchant_no(String merchant_no) {
+        this.merchant_no = merchant_no;
     }
 
     public String getCreated_by() {
