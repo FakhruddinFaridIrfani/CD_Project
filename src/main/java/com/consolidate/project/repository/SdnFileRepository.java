@@ -1,5 +1,6 @@
 package com.consolidate.project.repository;
 
+import com.consolidate.project.model.DMAFile;
 import com.consolidate.project.model.SdnFile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,9 +24,12 @@ public interface SdnFileRepository extends JpaRepository<SdnFile, Integer> {
     @Query(value = "SELECT * FROM cd.sdn_file where status <> 'deleted'", nativeQuery = true)
     List<SdnFile> getNotDeletedFile();
 
+    @Query(value = "SELECT * FROM cd.sdn_file where status =:status and file_type=:file_type ", nativeQuery = true)
+    List<SdnFile> getFileByStatus(@Param("status") String status, @Param("file_type") String file_type);
+
     @Modifying
     @Query(value = "UPDATE cd.sdn_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where sdnfile_id =:sdnfile_id", nativeQuery = true)
-    void updateUploadedFileStatus(@Param("sdnfile_id") int sdnfile_id, @Param("status") String status, @Param("remarks") String remarks);
+    void updateFileStatus(@Param("sdnfile_id") int sdnfile_id, @Param("status") String status, @Param("remarks") String remarks);
 
     @Query(value = "SELECT * FROM cd.sdn_file where file_type=:file_type AND  status <> 'deleted'", nativeQuery = true)
     SdnFile getFileToBDeleted(@Param("file_type") String file_type);

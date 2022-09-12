@@ -16,4 +16,7 @@ import java.util.List;
 public interface DmaDetailRepository extends JpaRepository<DMADetail, Integer> {
 
 
+    @Query(value = "SELECT COUNT(*) FROM cd.dma_detail",nativeQuery = true)
+    int getDmaEntryCount();
+
 }

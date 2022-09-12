@@ -15,7 +15,10 @@ import javax.transaction.Transactional;
 public interface KtpDetailRepository extends JpaRepository<KTPDetail, Integer> {
 
     @Modifying
-    @Query(value = "DELETE FROM cd.ktp_detail WHERE ktpfile_id=:ktpfile_id ", nativeQuery = true)
-    void deleteKtpDetailByFileId(@Param("ktpfile_id") int ktpfile_id);
+    @Query(value = "DELETE FROM cd.ktp_detail WHERE ktp_file_id=:ktp_file_id ", nativeQuery = true)
+    void deleteKtpDetailByFileId(@Param("ktp_file_id") int ktp_file_id);
+
+    @Query(value = "SELECT COUNT(*) FROM cd.ktp_detail",nativeQuery = true)
+    int getDmaEntryCount();
 
 }

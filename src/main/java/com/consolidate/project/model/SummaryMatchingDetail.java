@@ -24,8 +24,8 @@ public class SummaryMatchingDetail {
     private int summary_matching_id;
 
     @NotNull
-    @Column(name = "ktpdetail_id")
-    private int ktpdetail_id;
+    @Column(name = "ktp_detail_id")
+    private int ktp_detail_id;
 
     @NotNull
     @Column(name = "sdn_entry_id")
@@ -80,12 +80,12 @@ public class SummaryMatchingDetail {
         this.summary_matching_id = summary_matching_id;
     }
 
-    public int getKtpdetail_id() {
-        return ktpdetail_id;
+    public int getKtp_detail_id() {
+        return ktp_detail_id;
     }
 
-    public void setKtpdetail_id(int ktpdetail_id) {
-        this.ktpdetail_id = ktpdetail_id;
+    public void setKtp_detail_id(int ktp_detail_id) {
+        this.ktp_detail_id = ktp_detail_id;
     }
 
     public int getSdn_entry_id() {

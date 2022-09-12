@@ -11,13 +11,13 @@ import java.util.Date;
 @Table(name = "ktp_detail", schema = "cd")
 public class KTPDetail {
     @Id
-    @Column(name = "ktpdetail_id", columnDefinition = "serial")
+    @Column(name = "ktp_detail_id", columnDefinition = "serial")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int ktpdetail_id;
+    private int ktp_detail_id;
 
     @NotNull
-    @Column(name = "ktpfile_id")
-    private int ktpfile_id;
+    @Column(name = "ktp_file_id")
+    private int ktp_file_id;
 
     @NotNull
     @Column(name = "status")
@@ -75,20 +75,20 @@ public class KTPDetail {
     private Date updated_date;
 
 
-    public int getKtpdetail_id() {
-        return ktpdetail_id;
+    public int getKtp_detail_id() {
+        return ktp_detail_id;
     }
 
-    public void setKtpdetail_id(int ktpdetail_id) {
-        this.ktpdetail_id = ktpdetail_id;
+    public void setKtp_detail_id(int ktp_detail_id) {
+        this.ktp_detail_id = ktp_detail_id;
     }
 
-    public int getKtpfile_id() {
-        return ktpfile_id;
+    public int getKtp_file_id() {
+        return ktp_file_id;
     }
 
-    public void setKtpfile_id(int ktpfile_id) {
-        this.ktpfile_id = ktpfile_id;
+    public void setKtp_file_id(int ktp_file_id) {
+        this.ktp_file_id = ktp_file_id;
     }
 
     public String getStatus() {

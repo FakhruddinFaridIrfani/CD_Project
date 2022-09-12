@@ -86,6 +86,12 @@ public class DataService {
     @Autowired
     SystemParameterRepository systemParameterRepository;
 
+    @Autowired
+    SummaryMatchingRepository summaryMatchingRepository;
+
+    @Autowired
+    SummaryMatchingDetailRepository summaryMatchingDetailRepository;
+
 
     @Value("${file.path.sdn}")
     private String filePathSdn;
@@ -112,7 +118,7 @@ public class DataService {
     private String sftpUrl;
 
 
-    //FILE UPLOAD SECTION
+    //FILE SECTION
     public BaseResponse uploadSdnFile(String input) throws Exception {
         BaseResponse response = new BaseResponse();
         SdnFile sdnFile = new SdnFile();
@@ -196,7 +202,7 @@ public class DataService {
             SdnFile onDeleteSdnFile = sdnFileRepository.getFileToBDeleted(file_type);
             if (onDeleteSdnFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                sdnFileRepository.updateUploadedFileStatus(onDeleteSdnFile.getSdnfile_id(), "deleted", "-deleted on " + fileName + " uploading process");
+                sdnFileRepository.updateFileStatus(onDeleteSdnFile.getSdnfile_id(), "deleted", "-deleted on " + fileName + " uploading process");
                 sdnEntryRepository.deleteSdnEntryByFileId(onDeleteSdnFile.getSdnfile_id());
                 logger.info("Cleared");
             }
@@ -668,7 +674,7 @@ public class DataService {
                     }
                 }
             }
-            sdnFileRepository.updateUploadedFileStatus(currentSdnFileId, "uploaded", " -uploading file success");
+            sdnFileRepository.updateFileStatus(currentSdnFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + fileName);
             inputStream.close();
 
@@ -680,13 +686,13 @@ public class DataService {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            sdnFileRepository.updateUploadedFileStatus(currentSdnFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            sdnFileRepository.updateFileStatus(currentSdnFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         } catch (Exception e) {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            sdnFileRepository.updateUploadedFileStatus(currentSdnFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            sdnFileRepository.updateFileStatus(currentSdnFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         }
         return response;
@@ -735,7 +741,7 @@ public class DataService {
             KTPFile onDeleteKtpFile = ktpFileRepository.getFileToBDeleted();
             if (onDeleteKtpFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                ktpFileRepository.updateUploadedFileStatus(onDeleteKtpFile.getKtpfile_id(), "deleted", "deleted on " + file_name + " uploading process");
+                ktpFileRepository.updateFileStatus(onDeleteKtpFile.getKtp_file_id(), "deleted", "deleted on " + file_name + " uploading process");
                 ktpDetailRepository.deleteAll();
                 logger.info("Cleared");
             }
@@ -753,7 +759,7 @@ public class DataService {
             ktpFileRepository.save(ktpFile);
             logger.info("saved");
 
-            currentKTPFileId = ktpFileRepository.getKTPFileBySavedFileName(savedFileName).getKtpfile_id();
+            currentKTPFileId = ktpFileRepository.getKTPFileBySavedFileName(savedFileName).getKtp_file_id();
 //            logger.info("currentKTPFileId :  " + currentKTPFileId);
 
             //PARSING KTP DATA
@@ -797,7 +803,7 @@ public class DataService {
                     }
                     String dob2 = new SimpleDateFormat("dd MMM yyy").format(new SimpleDateFormat("ddMMyy").parse(dob2DateTemp + dob2MonthTemp + dob2YearTemp));
                     KTPDetail ktpDetail = new KTPDetail();
-                    ktpDetail.setKtpfile_id(currentKTPFileId);
+                    ktpDetail.setKtp_file_id(currentKTPFileId);
                     ktpDetail.setMerchant_name(merchantName);
                     ktpDetail.setMerchant_no(merchantNo);
                     ktpDetail.setStatus("active");
@@ -817,7 +823,7 @@ public class DataService {
             }
             br.close();
             inputStream.close();
-            ktpFileRepository.updateUploadedFileStatus(currentKTPFileId, "uploaded", " -uploading file success");
+            ktpFileRepository.updateFileStatus(currentKTPFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
 
 
@@ -830,13 +836,13 @@ public class DataService {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            ktpFileRepository.updateUploadedFileStatus(currentKTPFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            ktpFileRepository.updateFileStatus(currentKTPFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         } catch (Exception e) {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            ktpFileRepository.updateUploadedFileStatus(currentKTPFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            ktpFileRepository.updateFileStatus(currentKTPFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         }
         return response;
@@ -886,7 +892,7 @@ public class DataService {
             DMAFile onDeleteDMAFile = dmaFileRepository.getFileToBDeleted();
             if (onDeleteDMAFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                dmaFileRepository.updateUploadedFileStatus(onDeleteDMAFile.getDmafile_id(), "deleted", "deleted on " + file_name + " uploading process");
+                dmaFileRepository.updateFileStatus(onDeleteDMAFile.getDmafile_id(), "deleted", "deleted on " + file_name + " uploading process");
                 dmaDetailRepository.deleteAll();
                 logger.info("Cleared");
             }
@@ -931,7 +937,7 @@ public class DataService {
             }
             br.close();
             inputStream.close();
-            dmaFileRepository.updateUploadedFileStatus(currentDMAFileId, "uploaded", " -uploading file success");
+            dmaFileRepository.updateFileStatus(currentDMAFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
 
 
@@ -945,13 +951,13 @@ public class DataService {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            dmaFileRepository.updateUploadedFileStatus(currentDMAFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            dmaFileRepository.updateFileStatus(currentDMAFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         } catch (Exception e) {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
-            dmaFileRepository.updateUploadedFileStatus(currentDMAFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
+            dmaFileRepository.updateFileStatus(currentDMAFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         }
         return response;
@@ -968,6 +974,8 @@ public class DataService {
         int startingData = 0;
         List<SdnEntry> searchSdn = new ArrayList<>();
         List<SdnEntry> searchConsal = new ArrayList<>();
+        List<SdnEntry> searchSdnOri = new ArrayList<>();
+        List<SdnEntry> searchConsalOri = new ArrayList<>();
         try {
             JSONObject jsonInput = new JSONObject(input);
             first_name = jsonInput.optString("first_name");
@@ -989,12 +997,29 @@ public class DataService {
             createLog(input, userOnProcess, "searchData");
 
             if (dob.isEmpty()) {
-                searchSdn = sdnEntryRepository.searchDataNameId("sdn", first_name, last_name, id_number, limit, startingData);
-                searchConsal = sdnEntryRepository.searchDataNameId("consal", first_name, last_name, id_number, limit, startingData);
+                searchSdnOri = sdnEntryRepository.searchDataNameId("sdn", first_name, last_name, id_number);
+                searchConsalOri = sdnEntryRepository.searchDataNameId("consal", first_name, last_name, id_number);
             } else {
-                searchSdn = sdnEntryRepository.searchDataNameIdDob("sdn", first_name, last_name, id_number, dob, limit, startingData);
-                searchConsal = sdnEntryRepository.searchDataNameIdDob("consal", first_name, last_name, id_number, dob, limit, startingData);
+                searchSdnOri = sdnEntryRepository.searchDataNameIdDob("sdn", first_name, last_name, id_number, dob);
+                searchConsalOri = sdnEntryRepository.searchDataNameIdDob("consal", first_name, last_name, id_number, dob);
             }
+//            logger.info("sdn data ori size : " + searchSdnOri.size());
+//            logger.info("consal data ori size : " + searchConsalOri.size());
+            int maxPageSdn = (int) Math.ceil(searchSdnOri.size() / (limit * 1.0));
+            int maxPageConsal = (int) Math.ceil(searchConsalOri.size() / (limit * 1.0));
+            if (searchSdnOri.size() > 0) {
+                searchSdn = searchSdnOri.subList(startingData, Math.min((startingData + limit), searchSdnOri.size()));
+//                logger.info("sdn data from : " + startingData + " to " + Math.min((startingData + limit), searchSdnOri.size()));
+            }
+            if (searchConsalOri.size() > 0) {
+                searchConsal = searchConsalOri.subList(startingData, Math.min((startingData + limit), searchConsalOri.size()));
+//                logger.info("consal data from : " + startingData + " to " + Math.min((startingData + limit), searchConsalOri.size()));
+            }
+
+//            logger.info("sdn data to retrieve : " + searchSdn.size());
+//            logger.info("consal data to retrieve : " + searchConsal.size());
+
+
             Map<String, Object> results = new HashMap<>();
             List resultSdn = new ArrayList();
             List resultConsal = new ArrayList();
@@ -1034,26 +1059,26 @@ public class DataService {
                     } else if (entry.getLast_name().compareToIgnoreCase(last_name) == 0) {
                         headerData.put("last_name", entry.getLast_name());
                     }
-                    if (headerData.get("first_name").toString().compareToIgnoreCase("-")==0){
-                        if (sdnAkaList.size()>0){
-                            for (int a = 0;a<sdnAkaList.size();a++){
+                    if (headerData.get("first_name").toString().compareToIgnoreCase("-") == 0) {
+                        if (sdnAkaList.size() > 0) {
+                            for (int a = 0; a < sdnAkaList.size(); a++) {
                                 SdnAka sdnAka = sdnAkaList.get(a);
-                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name)==0){
+                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name) == 0) {
                                     headerData.put("first_name", sdnAka.getFirst_name());
-                                }else if (sdnAka.getLast_name().compareToIgnoreCase(first_name)==0){
+                                } else if (sdnAka.getLast_name().compareToIgnoreCase(first_name) == 0) {
                                     headerData.put("first_name", sdnAka.getLast_name());
                                 }
 
                             }
                         }
                     }
-                    if (headerData.get("last_name").toString().compareToIgnoreCase("-")==0){
-                        if (sdnAkaList.size()>0){
-                            for (int a = 0;a<sdnAkaList.size();a++){
+                    if (headerData.get("last_name").toString().compareToIgnoreCase("-") == 0) {
+                        if (sdnAkaList.size() > 0) {
+                            for (int a = 0; a < sdnAkaList.size(); a++) {
                                 SdnAka sdnAka = sdnAkaList.get(a);
-                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name)==0){
+                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name) == 0) {
                                     headerData.put("last_name", sdnAka.getFirst_name());
-                                }else if (sdnAka.getLast_name().compareToIgnoreCase(first_name)==0){
+                                } else if (sdnAka.getLast_name().compareToIgnoreCase(first_name) == 0) {
                                     headerData.put("last_name", sdnAka.getLast_name());
                                 }
 
@@ -1100,7 +1125,7 @@ public class DataService {
             if (searchConsal.size() > 0) {
                 for (int i = 0; i < searchConsal.size(); i++) {
                     Map dataSearch = new HashMap();
-                    SdnEntry entry = searchSdn.get(i);
+                    SdnEntry entry = searchConsal.get(i);
                     sdnAddressList = sdnAddressRepository.getSdnAddressBySdnEntryId(entry.getSdnEntry_id());
                     sdnAkaList = sdnAkaRepository.getSdnAkaBySdnEntryId(entry.getSdnEntry_id());
                     sdnCitizenshipList = sdnCitizenshipRepository.searchCitizenshipBySdnEntryId(entry.getSdnEntry_id());
@@ -1165,6 +1190,8 @@ public class DataService {
             }
             results.put("sdnData", resultSdn);
             results.put("consalData", resultConsal);
+            results.put("maxPageSdn", maxPageSdn);
+            results.put("maxPageConsal", maxPageConsal);
 
 
             response.setData(results);
@@ -1558,6 +1585,90 @@ public class DataService {
                 }
             }
         }
+    }
+
+    @Scheduled(cron = "0 59 23 * * *")
+    public void matchingProcess() throws Exception {
+        logger.info("Starting auto matching");
+//        int count = 0;
+        List<SdnFile> sdnFile = sdnFileRepository.getFileByStatus("uploaded", "sdn");
+        List<SdnFile> consalFile = sdnFileRepository.getFileByStatus("uploaded", "consal");
+        List<DMAFile> dmaFile = dmaFileRepository.getFileByStatus("uploaded");
+        List<KTPFile> ktpFile = ktpFileRepository.getFileByStatus("uploaded");
+//        if (sdnFile.size() > 0) {
+//            count++;
+//        }
+//        if (consalFile.size() > 0) {
+//            count++;
+//        }
+//        if (dmaFile.size() > 0) {
+//            count++;
+//        }
+//        if (ktpFile.size() > 0) {
+//            count++;
+//        }
+        if (sdnFile.size() > 0 && consalFile.size() > 0 && dmaFile.size() > 0 && ktpFile.size() > 0) {
+
+            Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            //FILE - FILE ON MATCHING PROCESS
+            int sdnFileId = sdnFile.get(0).getSdnfile_id();
+            int consalFileId = consalFile.get(0).getSdnfile_id();
+            int dmaFileId = dmaFile.get(0).getDmafile_id();
+            int ktpFileId = ktpFile.get(0).getKtp_file_id();
+
+            //UPDATE STATUS FILES ON PROCESS
+            sdnFileRepository.updateFileStatus(sdnFileId, "matching", " -matching process");
+            sdnFileRepository.updateFileStatus(consalFileId, "matching", " -matching process");
+            dmaFileRepository.updateFileStatus(dmaFileId, "matching", " -matching process");
+            ktpFileRepository.updateFileStatus(ktpFileId, "matching", " -matching process");
+
+            //GET COUNT DETAIL DATA
+            int countSdnEntry = sdnEntryRepository.getEntryCount(sdnFileId);
+            int countConsalEntry = sdnEntryRepository.getEntryCount(consalFileId);
+            int countDmaEntry = dmaDetailRepository.getDmaEntryCount();
+            int countKtpEntry = ktpDetailRepository.getDmaEntryCount();
+
+//            logger.info("matching on process");
+
+            SummaryMatching summaryMatching = new SummaryMatching();
+            summaryMatching.setSdnfile_id_sdn(sdnFileId);
+            summaryMatching.setSdnfile_id_consolidate(consalFileId);
+            summaryMatching.setDma_file_id(dmaFileId);
+            summaryMatching.setKtp_file_id(ktpFileId);
+            summaryMatching.setStatus("matching");
+            summaryMatching.setSdn_data(countSdnEntry);
+            summaryMatching.setConsolidate_data(countConsalEntry);
+            summaryMatching.setKtp_data(countKtpEntry);
+            summaryMatching.setDma_data(countDmaEntry);
+            summaryMatching.setStart_matching(newInputDate);
+            summaryMatching.setEnd_matching(newInputDate);
+            summaryMatching.setCreated_by("SYSTEM-AUTO");
+            summaryMatching.setUpdated_by("SYSTEM-AUTO");
+            summaryMatching.setCreated_date(newInputDate);
+            summaryMatching.setUpdated_date(newInputDate);
+            summaryMatchingRepository.save(summaryMatching);
+
+            summaryMatchingDetailRepository.deleteAll();
+
+            summaryMatchingDetailRepository.matchingPositive();
+            summaryMatchingDetailRepository.matchingPotential();
+
+            int summaryMatchingDetailPositive = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("positive");
+            int summaryMatchingDetailPotential = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("potential");
+
+            summaryMatchingRepository.updateSummaryMatching(summaryMatchingDetailPositive, summaryMatchingDetailPotential, sdnFileId, consalFileId, dmaFileId, ktpFileId);
+
+            //UPDATE STATUS FILES ON PROCESS
+            sdnFileRepository.updateFileStatus(sdnFileId, "matched", " -matching done");
+            sdnFileRepository.updateFileStatus(consalFileId, "matched", " -matching done");
+            dmaFileRepository.updateFileStatus(dmaFileId, "matched", " -matching done");
+            ktpFileRepository.updateFileStatus(ktpFileId, "matched", " -matching done");
+
+
+//            logger.info("matching done !!");
+        }
+
+
     }
 
 

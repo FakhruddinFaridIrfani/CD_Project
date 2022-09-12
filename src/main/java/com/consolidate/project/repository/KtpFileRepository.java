@@ -22,12 +22,12 @@ public interface KtpFileRepository extends JpaRepository<KTPFile, Integer> {
     @Query(value = "SELECT * FROM cd.ktp_file where status = 'uploading' OR status = 'matching' ", nativeQuery = true)
     List<KTPFile> getMatchingOrUploadingFile();
 
-    @Query(value = "SELECT * FROM cd.ktp_file where status <> 'deleted'", nativeQuery = true)
-    List<KTPFile> getNotDeletedFile();
+    @Query(value = "SELECT * FROM cd.ktp_file where status =:status ", nativeQuery = true)
+    List<KTPFile> getFileByStatus(@Param("status") String status);
 
     @Modifying
-    @Query(value = "UPDATE cd.ktp_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where ktpfile_id =:ktpfile_id", nativeQuery = true)
-    void updateUploadedFileStatus(@Param("ktpfile_id") int ktpfile_id, @Param("status") String status, @Param("remarks") String remarks);
+    @Query(value = "UPDATE cd.ktp_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where ktp_file_id =:ktp_file_id", nativeQuery = true)
+    void updateFileStatus(@Param("ktp_file_id") int ktp_file_id, @Param("status") String status, @Param("remarks") String remarks);
 
     @Query(value = "SELECT * FROM cd.ktp_file where status <> 'deleted'", nativeQuery = true)
     KTPFile getFileToBDeleted();

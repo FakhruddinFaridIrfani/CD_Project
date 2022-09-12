@@ -29,13 +29,13 @@ public class SummaryMatching {
     int sdnfile_id_consolidate;
 
     @NotNull
-    @Column(name = "ktpfile_id")
-    int ktpfile_id;
+    @Column(name = "ktp_file_id")
+    int ktp_file_id;
 
 
     @NotNull
-    @Column(name = "dmafile_id")
-    int dmafile_id;
+    @Column(name = "dma_file_id")
+    int dma_file_id;
 
     @Column(name = "sdn_data")
     int sdn_data;
@@ -120,20 +120,20 @@ public class SummaryMatching {
         this.sdnfile_id_consolidate = sdnfile_id_consolidate;
     }
 
-    public int getKtpfile_id() {
-        return ktpfile_id;
+    public int getKtp_file_id() {
+        return ktp_file_id;
     }
 
-    public void setKtpfile_id(int ktpfile_id) {
-        this.ktpfile_id = ktpfile_id;
+    public void setKtp_file_id(int ktp_file_id) {
+        this.ktp_file_id = ktp_file_id;
     }
 
-    public int getDmafile_id() {
-        return dmafile_id;
+    public int getDma_file_id() {
+        return dma_file_id;
     }
 
-    public void setDmafile_id(int dmafile_id) {
-        this.dmafile_id = dmafile_id;
+    public void setDma_file_id(int dma_file_id) {
+        this.dma_file_id = dma_file_id;
     }
 
     public int getSdn_data() {

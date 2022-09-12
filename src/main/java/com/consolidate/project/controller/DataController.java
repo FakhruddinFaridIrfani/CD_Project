@@ -149,4 +149,21 @@ public class DataController {
         logger.info("Search Data");
         return dataService.searchData(input);
     }
+
+    @PostMapping("/matchingProcess")
+    public BaseResponse matchingProcess() throws Exception, SQLException, ParseException, JSchException, JSONException {
+        logger.info("matching manual");
+        BaseResponse response = new BaseResponse();
+        try {
+            dataService.matchingProcess();
+            response.setSuccess(true);
+            response.setStatus("200");
+            response.setMessage("manual matching success");
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setStatus("500");
+            response.setMessage("Failed to matching : " + e.getMessage());
+        }
+        return response;
+    }
 }

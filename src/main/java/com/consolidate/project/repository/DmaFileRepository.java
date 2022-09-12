@@ -22,12 +22,12 @@ public interface DmaFileRepository extends JpaRepository<DMAFile, Integer> {
     List<DMAFile> getMatchingOrUploadingFile();
 
 
-    @Query(value = "SELECT * FROM cd.dma_file where status <> 'deleted'", nativeQuery = true)
-    List<DMAFile> getNotDeletedFile();
+    @Query(value = "SELECT * FROM cd.dma_file where status =:status ", nativeQuery = true)
+    List<DMAFile> getFileByStatus(@Param("status") String status);
 
     @Modifying
     @Query(value = "UPDATE cd.dma_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where dmafile_id =:dmafile_id", nativeQuery = true)
-    void updateUploadedFileStatus(@Param("dmafile_id") int dmafile_id, @Param("status") String status, @Param("remarks") String remarks);
+    void updateFileStatus(@Param("dmafile_id") int dmafile_id, @Param("status") String status, @Param("remarks") String remarks);
 
     @Query(value = "SELECT * FROM cd.dma_file where status <> 'deleted'", nativeQuery = true)
     DMAFile getFileToBDeleted();
