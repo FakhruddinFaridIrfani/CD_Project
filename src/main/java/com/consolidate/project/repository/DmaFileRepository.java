@@ -1,6 +1,7 @@
 package com.consolidate.project.repository;
 
 import com.consolidate.project.model.DMAFile;
+import com.consolidate.project.model.KTPFile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,7 +19,11 @@ public interface DmaFileRepository extends JpaRepository<DMAFile, Integer> {
     DMAFile getDMAFileBySavedFileName(@Param("file_name_save") String file_name_save);
 
     @Query(value = "SELECT * FROM cd.dma_file where status = 'uploading' OR status = 'matching'", nativeQuery = true)
-    List<DMAFile> getMatchingOrUploadingFile(@Param("file_type") String file_type);
+    List<DMAFile> getMatchingOrUploadingFile();
+
+
+    @Query(value = "SELECT * FROM cd.dma_file where status <> 'deleted'", nativeQuery = true)
+    List<DMAFile> getNotDeletedFile();
 
     @Modifying
     @Query(value = "UPDATE cd.dma_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where dmafile_id =:dmafile_id", nativeQuery = true)

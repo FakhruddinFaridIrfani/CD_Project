@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -42,23 +43,26 @@ public class DataController {
 
     @PostMapping("/uploadFile")
     public BaseResponse<String> uploadFile(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+        logger.info("Upload file");
+        return dataService.uploadSdnFile(input);
+    }
+
+
+    @PostMapping("/uploadFileManual")
+    public BaseResponse<String> uploadManualKTP_DMA(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
 
         BaseResponse response = new BaseResponse();
         try {
             JSONObject jsonInput = new JSONObject(input);
             String file_type = jsonInput.getString("file_type");
-            logger.info("Upload file : " + file_type.toUpperCase());
-            if (file_type.compareToIgnoreCase("sdn") == 0 || file_type.compareToIgnoreCase("consal") == 0) {
-                response = dataService.uploadSdnFile(input);
-            } else if (file_type.compareToIgnoreCase("ktp") == 0) {
-                response = dataService.uploadKtpFile(input);
+            if (file_type.compareToIgnoreCase("ktp") == 0) {
+                dataService.scheduledUploadKtpFile();
             } else if (file_type.compareToIgnoreCase("dma") == 0) {
-                response = dataService.uploadDmaFile(input);
-            } else {
-                response.setSuccess(false);
-                response.setStatus("500");
-                response.setMessage("Failed to upload : Unknown file type");
+                dataService.scheduledUploadDmaFile();
             }
+            response.setSuccess(true);
+            response.setStatus("200");
+            response.setMessage("manual upload success");
         } catch (Exception e) {
             response.setSuccess(false);
             response.setStatus("500");
@@ -128,9 +132,21 @@ public class DataController {
 
     @PostMapping("/addFile")
     public BaseResponse<Map<String, String>> addFile(@RequestBody String input) throws Exception {
-        logger.info(new Date().getTime() + " : Add File test");
+        logger.info("Add File test");
         BaseResponse baseResponse = new BaseResponse<>();
         JSONObject jsonObject = new JSONObject(input);
         return dataService.addFile(jsonObject.optString("file_name"), jsonObject.optString("file_content"), jsonObject.optString("folder"));
+    }
+
+    @PostMapping("/getFileList")
+    public BaseResponse<List<Object>> getExistingFile(@RequestBody String input) throws Exception {
+        logger.info("Get List file ");
+        return dataService.getNotDeletedFile(input);
+    }
+
+    @PostMapping("/searchData")
+    public BaseResponse searchData(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+        logger.info("Search Data");
+        return dataService.searchData(input);
     }
 }

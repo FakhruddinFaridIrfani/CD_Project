@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 @Transactional
@@ -17,4 +18,7 @@ public interface SdnCitizenshipRepository extends JpaRepository<SdnCitizenship, 
     @Modifying
     @Query(value = "DELETE FROM cd.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteCitizenshipBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
+
+    @Query(value = "SELECT * FROM cd.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    List<SdnCitizenship> searchCitizenshipBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

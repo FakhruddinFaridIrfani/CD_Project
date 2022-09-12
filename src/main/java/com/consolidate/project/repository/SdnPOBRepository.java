@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 @Transactional
@@ -17,4 +18,7 @@ public interface SdnPOBRepository extends JpaRepository<SdnPOB, Integer> {
     @Modifying
     @Query(value = "DELETE FROM cd.sdn_pob WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deletePOBBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
+
+    @Query(value = "SELECT * FROM cd.sdn_pob WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    List<SdnPOB> searchPOBBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

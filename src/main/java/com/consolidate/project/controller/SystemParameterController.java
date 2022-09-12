@@ -3,6 +3,7 @@ package com.consolidate.project.controller;
 
 import com.consolidate.project.model.BaseResponse;
 import com.consolidate.project.model.Role;
+import com.consolidate.project.model.SystemParameter;
 import com.consolidate.project.repository.RoleRepository;
 import com.consolidate.project.repository.UserRepository;
 import com.consolidate.project.service.UserManagementService;
@@ -32,21 +33,21 @@ public class SystemParameterController {
     }
 
     @PostMapping("/getSystemParameter")
-    public BaseResponse<List<Role>> getSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
+    public BaseResponse<List<SystemParameter>> getSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
         logger.info("Get System Parameter");
-        return userManagementService.getRole(input);
+        return userManagementService.getSystemParameter(input);
     }
 
     @PostMapping("/updateSystemParameter")
-    public BaseResponse<Role> updateSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
+    public BaseResponse<SystemParameter> updateSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
         logger.info("Update System Parameter");
-        return userManagementService.updateRole(input);
+        return userManagementService.updateSystemParameter(input);
     }
 
     @PostMapping("/deleteSystemParameter")
-    public BaseResponse<Role> deleteSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
+    public BaseResponse<SystemParameter> deleteSystemParameter(@RequestBody String input) throws Exception, SQLException, ParseException {
         logger.info("Delete System Parameter");
-        return userManagementService.deleteRole(input);
+        return userManagementService.deleteSystemParameter(input);
     }
 
 }

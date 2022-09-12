@@ -20,6 +20,9 @@ public interface SdnFileRepository extends JpaRepository<SdnFile, Integer> {
     @Query(value = "SELECT * FROM cd.sdn_file where file_type =:file_type AND (status = 'uploading' OR status = 'matching') ", nativeQuery = true)
     List<SdnFile> getMatchingOrUploadingFile(@Param("file_type") String file_type);
 
+    @Query(value = "SELECT * FROM cd.sdn_file where status <> 'deleted'", nativeQuery = true)
+    List<SdnFile> getNotDeletedFile();
+
     @Modifying
     @Query(value = "UPDATE cd.sdn_file SET status =:status,updated_date = current_timestamp,remarks =(remarks || :remarks) where sdnfile_id =:sdnfile_id", nativeQuery = true)
     void updateUploadedFileStatus(@Param("sdnfile_id") int sdnfile_id, @Param("status") String status, @Param("remarks") String remarks);

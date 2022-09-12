@@ -1,6 +1,7 @@
 package com.consolidate.project.repository;
 
 import com.consolidate.project.model.SdnAka;
+import com.consolidate.project.model.SdnAka;
 import com.consolidate.project.model.SdnProgram;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 @Transactional
@@ -17,4 +19,6 @@ public interface SdnAkaRepository extends JpaRepository<SdnAka, Integer> {
     @Query(value = "DELETE FROM cd.sdn_aka WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteAkaBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
+    @Query(value = "SELECT * FROM cd.sdn_aka where sdn_entry_id = :sdn_entry_id", nativeQuery = true)
+    List<SdnAka> getSdnAkaBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

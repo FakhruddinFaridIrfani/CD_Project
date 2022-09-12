@@ -521,7 +521,7 @@ public class UserManagementService {
             }
             String userOnProcess = auth.get("user_name").toString();
             createLog(input, userOnProcess, "addSystemParameter");
-            parameter_name = jsonInput.optString("role_name");
+            parameter_name = jsonInput.optString("parameter_name");
             parameter_value = jsonInput.optString("parameter_value");
             //Existing Role Name check
             List<SystemParameter> parameterNameCheck = systemParameterRepository.getSystemParameterByName(parameter_name);
@@ -542,7 +542,7 @@ public class UserManagementService {
             systemParameterRepository.save(systemParameter);
             response.setStatus("200");
             response.setSuccess(true);
-            response.setMessage("Role successfully Added");
+            response.setMessage("System parameter successfully Added");
 
         } catch (Exception e) {
             response.setStatus("500");
@@ -572,7 +572,7 @@ public class UserManagementService {
             List<SystemParameter> getSystemParameterResult = systemParameterRepository.getSystemParameter();
 
             response.setData(getSystemParameterResult);
-            response.setStatus("2000");
+            response.setStatus("200");
             response.setSuccess(true);
             response.setMessage("System Parameter Listed");
         } catch (Exception e) {
@@ -583,10 +583,11 @@ public class UserManagementService {
         return response;
     }
 
-    public BaseResponse<Role> updateSystemParameter(String input) throws Exception, SQLException {
+    public BaseResponse<SystemParameter> updateSystemParameter(String input) throws Exception, SQLException {
         BaseResponse response = new BaseResponse();
         String parameter_name;
         String parameter_value;
+        String status;
         int systemparameter_id;
         try {
             JSONObject jsonInput = new JSONObject(input);
@@ -603,16 +604,17 @@ public class UserManagementService {
 
             parameter_name = jsonInput.optString("parameter_name");
             parameter_value = jsonInput.optString("parameter_value");
+            status = jsonInput.optString("status");
             systemparameter_id = jsonInput.optInt("systemparameter_id");
             //Existing parameter name check
-            List<SystemParameter> parameterNameCheck = systemParameterRepository.getRoleByNameExceptId(parameter_name, systemparameter_id);
+            List<SystemParameter> parameterNameCheck = systemParameterRepository.getParameterByNameExceptId(parameter_name, systemparameter_id);
             if (parameterNameCheck.size() > 0) {
                 response.setStatus("500");
                 response.setSuccess(false);
                 response.setMessage("Parameter name already exist / used");
                 return response;
             }
-            systemParameterRepository.updateSystemParameter(parameter_name, parameter_value, userOnProcess, systemparameter_id);
+            systemParameterRepository.updateSystemParameter(parameter_name, parameter_value, userOnProcess, status, systemparameter_id);
             response.setStatus("200");
             response.setSuccess(true);
             response.setMessage("System parameter successfully Updated");
@@ -624,7 +626,7 @@ public class UserManagementService {
         return response;
     }
 
-    public BaseResponse<Role> deleteSystemParameter(String input) throws Exception, SQLException {
+    public BaseResponse<SystemParameter> deleteSystemParameter(String input) throws Exception, SQLException {
         BaseResponse response = new BaseResponse();
 
         try {

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -85,6 +86,7 @@ public class DataService {
     @Autowired
     SystemParameterRepository systemParameterRepository;
 
+
     @Value("${file.path.sdn}")
     private String filePathSdn;
 
@@ -120,7 +122,17 @@ public class DataService {
         try {
             JSONObject jsonInput = new JSONObject(input);
             String fileName = jsonInput.getString("file_name");
+            if (fileName.split("\\.")[1].compareToIgnoreCase("xml") != 0) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage("Allowed file extension is XML");
+                logger.info("Allowed file extension is XML");
+                return response;
+            }
+
+
             String file_type = jsonInput.getString("file_type");
+            logger.info("Upload file : " + file_type.toUpperCase());
 
             Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
             //Token Auth
@@ -157,6 +169,13 @@ public class DataService {
 
 
             String fileData = jsonInput.getString("file_data");
+            if (fileData.isEmpty() || fileData == null) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage("file data can't be null or empty");
+                logger.info("file data can't be null or empty");
+                return response;
+            }
 
 
             String savedFileName = "";
@@ -174,11 +193,10 @@ public class DataService {
             }
 
             //CLEARING CURRENT DATA ON DB
-
             SdnFile onDeleteSdnFile = sdnFileRepository.getFileToBDeleted(file_type);
             if (onDeleteSdnFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                sdnFileRepository.updateUploadedFileStatus(onDeleteSdnFile.getSdnfile_id(), "deleted", "deleted on " + fileName + " uploading process");
+                sdnFileRepository.updateUploadedFileStatus(onDeleteSdnFile.getSdnfile_id(), "deleted", "-deleted on " + fileName + " uploading process");
                 sdnEntryRepository.deleteSdnEntryByFileId(onDeleteSdnFile.getSdnfile_id());
                 logger.info("Cleared");
             }
@@ -210,7 +228,6 @@ public class DataService {
             doc.getDocumentElement().normalize();
 
             NodeList sdnEntryList = doc.getElementsByTagName("sdnEntry");
-//            logger.info("sdnEntryList count : " + sdnEntryList.getLength());
             for (int i = 0; i < sdnEntryList.getLength(); i++) {
                 Node node = sdnEntryList.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -675,37 +692,34 @@ public class DataService {
         return response;
     }
 
-    public BaseResponse uploadKtpFile(String input) throws Exception {
+    public BaseResponse uploadKtpFile(String file_name, String file_data) throws Exception {
         BaseResponse response = new BaseResponse();
         KTPFile ktpFile = new KTPFile();
         int currentKTPFileId = 0;
         try {
-            JSONObject jsonInput = new JSONObject(input);
-            String fileName = jsonInput.getString("file_name");
             String file_type = "ktp";
 
-            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
-            //Token Auth
-            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
-                response.setStatus("401");
-                response.setSuccess(false);
-                response.setMessage("Token Authentication Failed");
-                return response;
-            }
-            String userOnProcess = auth.get("user_name").toString();
-            createLog(jsonInput.getString("file_name"), userOnProcess, "uploadFile");
-
-            BaseResponse canUpload = checkUploadingOrMatchingFile(file_type);
-            if (canUpload.isSuccess() == false) {
-                return canUpload;
-            }
-
-            String fileData = jsonInput.getString("file_data");
-
+//            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+//            //Token Auth
+//            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+//                response.setStatus("401");
+//                response.setSuccess(false);
+//                response.setMessage("Token Authentication Failed");
+//                return response;
+//            }
+//            String userOnProcess = auth.get("user_name").toString();
+            createLog(file_name, "SYSTEM-AUTO", "uploadFile");
+//
+//            BaseResponse canUpload = checkUploadingOrMatchingFile(file_type);
+//            if (canUpload.isSuccess() == false) {
+//                return canUpload;
+//            }
+//
+//            String fileData = jsonInput.getString("file_data");
 
             String savedFileName = "";
-            logger.info("Saving " + fileName + "to SFTP . . .  . ");
-            BaseResponse<Map<String, String>> fileUploadProcess = addFile(fileName, fileData, "ktp");
+            logger.info("Saving " + file_name + "to SFTP . . .  . ");
+            BaseResponse<Map<String, String>> fileUploadProcess = addFile(file_name, file_data, "ktp");
             if (fileUploadProcess.isSuccess() == true) {
                 savedFileName = fileUploadProcess.getData().get("file");
                 logger.info("saved");
@@ -721,18 +735,18 @@ public class DataService {
             KTPFile onDeleteKtpFile = ktpFileRepository.getFileToBDeleted();
             if (onDeleteKtpFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                ktpFileRepository.updateUploadedFileStatus(onDeleteKtpFile.getKtpfile_id(), "deleted", "deleted on " + fileName + " uploading process");
+                ktpFileRepository.updateUploadedFileStatus(onDeleteKtpFile.getKtpfile_id(), "deleted", "deleted on " + file_name + " uploading process");
                 ktpDetailRepository.deleteAll();
                 logger.info("Cleared");
             }
 
             Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-            logger.info("Saving File " + fileName + "to DB . . .  . ");
-            ktpFile.setFile_name_ori(fileName);
+            logger.info("Saving File " + file_name + "to DB . . .  . ");
+            ktpFile.setFile_name_ori(file_name);
             ktpFile.setFile_name_save(savedFileName);
             ktpFile.setStatus("uploading");
-            ktpFile.setCreated_by(userOnProcess);
-            ktpFile.setUpdated_by(userOnProcess);
+            ktpFile.setCreated_by("SYSTEM-AUTO");
+            ktpFile.setUpdated_by("SYSTEM-AUTO");
             ktpFile.setCreated_date(newInputDate);
             ktpFile.setUpdated_date(newInputDate);
             ktpFile.setRemarks("");
@@ -793,8 +807,8 @@ public class DataService {
                     ktpDetail.setDob_2(dob2);
                     ktpDetail.setKtp_1(ktp_1);
                     ktpDetail.setKtp_2(ktp_2);
-                    ktpDetail.setCreated_by(userOnProcess);
-                    ktpDetail.setUpdated_by(userOnProcess);
+                    ktpDetail.setCreated_by("SYSTEM-AUTO");
+                    ktpDetail.setUpdated_by("SYSTEM-AUTO");
                     ktpDetail.setCreated_date(newInputDate);
                     ktpDetail.setUpdated_date(newInputDate);
                     ktpDetailRepository.save(ktpDetail);
@@ -804,7 +818,7 @@ public class DataService {
             br.close();
             inputStream.close();
             ktpFileRepository.updateUploadedFileStatus(currentKTPFileId, "uploaded", " -uploading file success");
-            logger.info("Uploading complete for  :" + fileName);
+            logger.info("Uploading complete for  :" + file_name);
 
 
             response.setData(savedFileName);
@@ -828,37 +842,35 @@ public class DataService {
         return response;
     }
 
-    public BaseResponse uploadDmaFile(String input) throws Exception {
+    public BaseResponse uploadDmaFile(String file_name, String file_data) throws Exception {
         BaseResponse response = new BaseResponse();
         DMAFile dmaFile = new DMAFile();
         int currentDMAFileId = 0;
         try {
-            JSONObject jsonInput = new JSONObject(input);
-            String fileName = jsonInput.getString("file_name");
             String file_type = "dma";
 
-            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
-            //Token Auth
-            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
-                response.setStatus("401");
-                response.setSuccess(false);
-                response.setMessage("Token Authentication Failed");
-                return response;
-            }
-            String userOnProcess = auth.get("user_name").toString();
-            createLog(jsonInput.getString("file_name"), userOnProcess, "uploadFile");
-
-            BaseResponse canUpload = checkUploadingOrMatchingFile(file_type);
-            if (canUpload.isSuccess() == false) {
-                return canUpload;
-            }
-
-            String fileData = jsonInput.getString("file_data");
+//            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+//            //Token Auth
+//            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+//                response.setStatus("401");
+//                response.setSuccess(false);
+//                response.setMessage("Token Authentication Failed");
+//                return response;
+//            }
+//            String userOnProcess = auth.get("user_name").toString();
+            createLog(file_name, "SYSTEM-AUTO", "uploadFile");
+//
+//            BaseResponse canUpload = checkUploadingOrMatchingFile(file_type);
+//            if (canUpload.isSuccess() == false) {
+//                return canUpload;
+//            }
+//
+//            String fileData = jsonInput.getString("file_data");
 
 
             String savedFileName = "";
-            logger.info("Saving " + fileName + "to SFTP . . .  . ");
-            BaseResponse<Map<String, String>> fileUploadProcess = addFile(fileName, fileData, "dma");
+            logger.info("Saving " + file_name + "to SFTP . . .  . ");
+            BaseResponse<Map<String, String>> fileUploadProcess = addFile(file_name, file_data, "dma");
             if (fileUploadProcess.isSuccess() == true) {
                 savedFileName = fileUploadProcess.getData().get("file");
                 logger.info("saved");
@@ -874,18 +886,18 @@ public class DataService {
             DMAFile onDeleteDMAFile = dmaFileRepository.getFileToBDeleted();
             if (onDeleteDMAFile != null) {
                 logger.info("Clearing last uploaded " + file_type.toUpperCase() + " file data on DB . . .  . ");
-                dmaFileRepository.updateUploadedFileStatus(onDeleteDMAFile.getDmafile_id(), "deleted", "deleted on " + fileName + " uploading process");
+                dmaFileRepository.updateUploadedFileStatus(onDeleteDMAFile.getDmafile_id(), "deleted", "deleted on " + file_name + " uploading process");
                 dmaDetailRepository.deleteAll();
                 logger.info("Cleared");
             }
 
             Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-            logger.info("Saving File " + fileName + "to DB . . .  . ");
-            dmaFile.setFile_name_ori(fileName);
+            logger.info("Saving File " + file_name + "to DB . . .  . ");
+            dmaFile.setFile_name_ori(file_name);
             dmaFile.setFile_name_save(savedFileName);
             dmaFile.setStatus("uploading");
-            dmaFile.setCreated_by(userOnProcess);
-            dmaFile.setUpdated_by(userOnProcess);
+            dmaFile.setCreated_by("SYSTEM-AUTO");
+            dmaFile.setUpdated_by("SYSTEM-AUTO");
             dmaFile.setCreated_date(newInputDate);
             dmaFile.setUpdated_date(newInputDate);
             dmaFile.setRemarks("");
@@ -908,8 +920,8 @@ public class DataService {
                     dmaDetail.setDmafile_id(currentDMAFileId);
                     dmaDetail.setStatus("active");
                     dmaDetail.setMerchant_no(merchantNo);
-                    dmaDetail.setCreated_by(userOnProcess);
-                    dmaDetail.setUpdated_by(userOnProcess);
+                    dmaDetail.setCreated_by("SYSTEM-AUTO");
+                    dmaDetail.setUpdated_by("SYSTEM-AUTO");
                     dmaDetail.setCreated_date(newInputDate);
                     dmaDetail.setUpdated_date(newInputDate);
                     dmaDetailRepository.save(dmaDetail);
@@ -920,7 +932,7 @@ public class DataService {
             br.close();
             inputStream.close();
             dmaFileRepository.updateUploadedFileStatus(currentDMAFileId, "uploaded", " -uploading file success");
-            logger.info("Uploading complete for  :" + fileName);
+            logger.info("Uploading complete for  :" + file_name);
 
 
             response.setData(savedFileName);
@@ -945,6 +957,230 @@ public class DataService {
         return response;
     }
 
+    public BaseResponse searchData(String input) throws Exception {
+        BaseResponse response = new BaseResponse();
+        String first_name = "";
+        String last_name = "";
+        String id_number = "";
+        String dob = "";
+        int limit = 0;
+        int offset = 0;
+        int startingData = 0;
+        List<SdnEntry> searchSdn = new ArrayList<>();
+        List<SdnEntry> searchConsal = new ArrayList<>();
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            first_name = jsonInput.optString("first_name");
+            last_name = jsonInput.optString("last_name");
+            id_number = jsonInput.optString("id_number");
+            dob = jsonInput.optString("dob");
+            limit = jsonInput.getInt("limit");
+            offset = jsonInput.getInt("offset");
+            startingData = (offset - 1) * limit;
+            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+            //Token Auth
+            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+                response.setStatus("401");
+                response.setSuccess(false);
+                response.setMessage("Token Authentication Failed");
+                return response;
+            }
+            String userOnProcess = auth.get("user_name").toString();
+            createLog(input, userOnProcess, "searchData");
+
+            if (dob.isEmpty()) {
+                searchSdn = sdnEntryRepository.searchDataNameId("sdn", first_name, last_name, id_number, limit, startingData);
+                searchConsal = sdnEntryRepository.searchDataNameId("consal", first_name, last_name, id_number, limit, startingData);
+            } else {
+                searchSdn = sdnEntryRepository.searchDataNameIdDob("sdn", first_name, last_name, id_number, dob, limit, startingData);
+                searchConsal = sdnEntryRepository.searchDataNameIdDob("consal", first_name, last_name, id_number, dob, limit, startingData);
+            }
+            Map<String, Object> results = new HashMap<>();
+            List resultSdn = new ArrayList();
+            List resultConsal = new ArrayList();
+            List<SdnAddress> sdnAddressList = new ArrayList<>();
+            List<SdnAka> sdnAkaList = new ArrayList<>();
+            List<SdnCitizenship> sdnCitizenshipList = new ArrayList<>();
+            List<SdnDOB> sdnDOBList = new ArrayList<>();
+            List<SdnID> sdnIDList = new ArrayList<>();
+            List<SdnNationality> sdnNationalityList = new ArrayList<>();
+            List<SdnPOB> sdnPOBList = new ArrayList<>();
+            List<SdnProgram> sdnProgramsList = new ArrayList<>();
+            if (searchSdn.size() > 0) {
+                for (int i = 0; i < searchSdn.size(); i++) {
+                    Map dataSearch = new HashMap();
+                    SdnEntry entry = searchSdn.get(i);
+                    sdnAddressList = sdnAddressRepository.getSdnAddressBySdnEntryId(entry.getSdnEntry_id());
+                    sdnAkaList = sdnAkaRepository.getSdnAkaBySdnEntryId(entry.getSdnEntry_id());
+                    sdnCitizenshipList = sdnCitizenshipRepository.searchCitizenshipBySdnEntryId(entry.getSdnEntry_id());
+                    sdnDOBList = sdnDOBRepository.searchDOBBySdnEntryId(entry.getSdnEntry_id());
+                    sdnIDList = sdnIDRepository.searchIDBySdnEntryId(entry.getSdnEntry_id());
+                    sdnNationalityList = sdnNationalityRepository.searchNationalityBySdnEntryId(entry.getSdnEntry_id());
+                    sdnPOBList = sdnPOBRepository.searchPOBBySdnEntryId(entry.getSdnEntry_id());
+                    sdnProgramsList = sdnProgramRepository.searchProgramBySdnEntryId(entry.getSdnEntry_id());
+
+                    Map headerData = new HashMap();
+                    //first-name
+                    headerData.put("first_name", "-");
+                    if (entry.getFirst_name().compareToIgnoreCase(first_name) == 0) {
+                        headerData.put("first_name", entry.getFirst_name());
+                    } else if (entry.getLast_name().compareToIgnoreCase(first_name) == 0) {
+                        headerData.put("first_name", entry.getLast_name());
+                    }
+                    //last-name
+                    headerData.put("last_name", "-");
+                    if (entry.getFirst_name().compareToIgnoreCase(last_name) == 0) {
+                        headerData.put("last_name", entry.getFirst_name());
+                    } else if (entry.getLast_name().compareToIgnoreCase(last_name) == 0) {
+                        headerData.put("last_name", entry.getLast_name());
+                    }
+                    if (headerData.get("first_name").toString().compareToIgnoreCase("-")==0){
+                        if (sdnAkaList.size()>0){
+                            for (int a = 0;a<sdnAkaList.size();a++){
+                                SdnAka sdnAka = sdnAkaList.get(a);
+                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name)==0){
+                                    headerData.put("first_name", sdnAka.getFirst_name());
+                                }else if (sdnAka.getLast_name().compareToIgnoreCase(first_name)==0){
+                                    headerData.put("first_name", sdnAka.getLast_name());
+                                }
+
+                            }
+                        }
+                    }
+                    if (headerData.get("last_name").toString().compareToIgnoreCase("-")==0){
+                        if (sdnAkaList.size()>0){
+                            for (int a = 0;a<sdnAkaList.size();a++){
+                                SdnAka sdnAka = sdnAkaList.get(a);
+                                if (sdnAka.getFirst_name().compareToIgnoreCase(first_name)==0){
+                                    headerData.put("last_name", sdnAka.getFirst_name());
+                                }else if (sdnAka.getLast_name().compareToIgnoreCase(first_name)==0){
+                                    headerData.put("last_name", sdnAka.getLast_name());
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    //dob
+                    headerData.put("dob", "-");
+                    if (sdnDOBList.size() > 0) {
+                        for (int j = 0; j < sdnDOBList.size(); j++) {
+                            SdnDOB sdnDOB = sdnDOBList.get(j);
+                            if (sdnDOB.getDob().compareToIgnoreCase(dob) == 0) {
+                                headerData.put("dob", sdnDOB.getDob());
+                            }
+                        }
+                    }
+
+                    //id
+                    headerData.put("id_number", "-");
+                    if (sdnIDList.size() > 0) {
+                        for (int j = 0; j < sdnIDList.size(); j++) {
+                            SdnID sdnID = sdnIDList.get(j);
+                            if (sdnID.getId_number().compareToIgnoreCase(id_number) == 0) {
+                                headerData.put("id_number", sdnID.getId_number());
+                            }
+                        }
+                    }
+                    dataSearch.put("header", headerData);
+                    dataSearch.put("addrees", sdnAddressList);
+                    dataSearch.put("aka", sdnAkaList);
+                    dataSearch.put("citizenship", sdnCitizenshipList);
+                    dataSearch.put("dob", sdnDOBList);
+                    dataSearch.put("id", sdnIDList);
+                    dataSearch.put("nationality", sdnNationalityList);
+                    dataSearch.put("pob", sdnPOBList);
+                    dataSearch.put("program", sdnProgramsList);
+
+                    resultSdn.add(dataSearch);
+
+                }
+            }
+            if (searchConsal.size() > 0) {
+                for (int i = 0; i < searchConsal.size(); i++) {
+                    Map dataSearch = new HashMap();
+                    SdnEntry entry = searchSdn.get(i);
+                    sdnAddressList = sdnAddressRepository.getSdnAddressBySdnEntryId(entry.getSdnEntry_id());
+                    sdnAkaList = sdnAkaRepository.getSdnAkaBySdnEntryId(entry.getSdnEntry_id());
+                    sdnCitizenshipList = sdnCitizenshipRepository.searchCitizenshipBySdnEntryId(entry.getSdnEntry_id());
+                    sdnDOBList = sdnDOBRepository.searchDOBBySdnEntryId(entry.getSdnEntry_id());
+                    sdnIDList = sdnIDRepository.searchIDBySdnEntryId(entry.getSdnEntry_id());
+                    sdnNationalityList = sdnNationalityRepository.searchNationalityBySdnEntryId(entry.getSdnEntry_id());
+                    sdnPOBList = sdnPOBRepository.searchPOBBySdnEntryId(entry.getSdnEntry_id());
+                    sdnProgramsList = sdnProgramRepository.searchProgramBySdnEntryId(entry.getSdnEntry_id());
+
+                    Map headerData = new HashMap();
+                    //first-name
+                    if (entry.getFirst_name().compareToIgnoreCase(first_name) == 0) {
+                        headerData.put("first_name", entry.getFirst_name());
+                    } else if (entry.getLast_name().compareToIgnoreCase(first_name) == 0) {
+                        headerData.put("first_name", entry.getLast_name());
+                    } else {
+                        headerData.put("first_name", "-");
+                    }
+                    //last-name
+                    if (entry.getFirst_name().compareToIgnoreCase(last_name) == 0) {
+                        headerData.put("last_name", entry.getFirst_name());
+                    } else if (entry.getLast_name().compareToIgnoreCase(last_name) == 0) {
+                        headerData.put("last_name", entry.getLast_name());
+                    } else {
+                        headerData.put("last_name", "-");
+                    }
+
+                    //dob
+                    headerData.put("dob", "-");
+                    if (sdnDOBList.size() > 0) {
+                        for (int j = 0; j < sdnDOBList.size(); j++) {
+                            SdnDOB sdnDOB = sdnDOBList.get(j);
+                            if (sdnDOB.getDob().compareToIgnoreCase(dob) == 0) {
+                                headerData.put("dob", sdnDOB.getDob());
+                            }
+                        }
+                    }
+
+                    //id
+                    headerData.put("id_number", "-");
+                    if (sdnIDList.size() > 0) {
+                        for (int j = 0; j < sdnIDList.size(); j++) {
+                            SdnID sdnID = sdnIDList.get(j);
+                            if (sdnID.getId_number().compareToIgnoreCase(id_number) == 0) {
+                                headerData.put("id_number", sdnID.getId_number());
+                            }
+                        }
+                    }
+                    dataSearch.put("header", headerData);
+                    dataSearch.put("addrees", sdnAddressList);
+                    dataSearch.put("aka", sdnAkaList);
+                    dataSearch.put("citizenship", sdnCitizenshipList);
+                    dataSearch.put("dob", sdnDOBList);
+                    dataSearch.put("id", sdnIDList);
+                    dataSearch.put("nationality", sdnNationalityList);
+                    dataSearch.put("pob", sdnPOBList);
+                    dataSearch.put("program", sdnProgramsList);
+
+                    resultConsal.add(dataSearch);
+
+                }
+            }
+            results.put("sdnData", resultSdn);
+            results.put("consalData", resultConsal);
+
+
+            response.setData(results);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("Search data success");
+
+        } catch (Exception e) {
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return response;
+    }
+
     public BaseResponse<Map<String, String>> addFile(String file_name, String file_content, String folder) throws Exception {
         BaseResponse response = new BaseResponse();
         Session session = null;
@@ -962,13 +1198,29 @@ public class DataService {
 
             String path = "";
             if (folder.compareToIgnoreCase("sdn") == 0) {
-                path = filePathSdn;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("consolidate") == 0) {
-                path = filePathConsolidate;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("ktp") == 0) {
-                path = filePathKtp;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("dma") == 0) {
-                path = filePathDma;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1007,6 +1259,7 @@ public class DataService {
         Session session = null;
         ChannelSftp channel = null;
         Map<String, Object> result = new HashMap<>();
+        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
         try {
             session = new JSch().getSession(sftpUser, sftpUrl, 22);
             session.setPassword(sftpPassword);
@@ -1017,18 +1270,33 @@ public class DataService {
 
             String path = "";
             if (folder.compareToIgnoreCase("sdn") == 0) {
-                path = filePathSdn;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("consolidate") == 0) {
-                path = filePathConsolidate;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("ktp") == 0) {
-                path = filePathKtp;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else if (folder.compareToIgnoreCase("dma") == 0) {
-                path = filePathDma;
+                for (SystemParameter parameter : systemParameterList) {
+                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
+                        path = parameter.getParameter_value();
+                    }
+                }
             } else {
                 response.setStatus("500");
                 response.setSuccess(false);
                 response.setMessage("unknown folder");
-                logger.info("unknown folder");
                 return response;
             }
 
@@ -1087,9 +1355,9 @@ public class DataService {
             if (file_type.compareToIgnoreCase("sdn") == 0 || file_type.compareToIgnoreCase("consal") == 0) {
                 uploadingOrMatchingFile = sdnFileRepository.getMatchingOrUploadingFile(file_type);
             } else if (file_type.compareToIgnoreCase("ktp") == 0) {
-                uploadingOrMatchingFile = ktpFileRepository.getMatchingOrUploadingFile(file_type);
+                uploadingOrMatchingFile = ktpFileRepository.getMatchingOrUploadingFile();
             } else if (file_type.compareToIgnoreCase("dma") == 0) {
-                uploadingOrMatchingFile = dmaFileRepository.getMatchingOrUploadingFile(file_type);
+                uploadingOrMatchingFile = dmaFileRepository.getMatchingOrUploadingFile();
             }
             if (uploadingOrMatchingFile.size() > 0) {
                 response.setStatus("500");
@@ -1109,6 +1377,44 @@ public class DataService {
             logger.info("Service error : " + e.getMessage());
         }
 
+        return response;
+    }
+
+    public BaseResponse<List<Object>> getNotDeletedFile(String input) {
+        BaseResponse<List<Object>> response = new BaseResponse<>();
+        List<Object> fileList = new ArrayList<>();
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+            //Token Auth
+            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+                response.setStatus("401");
+                response.setSuccess(false);
+                response.setMessage("Token Authentication Failed");
+                return response;
+            }
+            String userOnProcess = auth.get("user_name").toString();
+            createLog(input, userOnProcess, "getUndeletedFile");
+            List sdnFileList = sdnFileRepository.getNotDeletedFile();
+//            List ktpFileList = ktpFileRepository.getNotDeletedFile();
+//            List dmaFileList = dmaFileRepository.getNotDeletedFile();
+            fileList.addAll(sdnFileList);
+//            fileList.addAll(ktpFileList);
+//            fileList.addAll(dmaFileList);
+
+            response.setData(fileList);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("File Listed");
+            logger.info("File Listed");
+
+        } catch (Exception e) {
+            response.setData(new ArrayList<>());
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage("Server error : " + e.getMessage());
+            logger.info("Server error : " + e.getMessage());
+        }
         return response;
     }
 
@@ -1144,5 +1450,115 @@ public class DataService {
         sdnLogger.setCreated_date(newInputDate);
         sdnLoggerRepository.save(sdnLogger);
     }
+
+    //SCHEDULER KTP-DMA
+    @Scheduled(cron = "0 0/30 * * * *")
+    public void scheduledUploadKtpFile() throws Exception {
+        Session session = null;
+        ChannelSftp channel = null;
+        logger.info("Starting auto upload KTP file");
+
+        List<KTPFile> onProcessKtpFile = ktpFileRepository.getMatchingOrUploadingFile();
+        String filePathUploadKtp = "";
+
+        if (onProcessKtpFile.size() == 0) {
+            List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+            for (SystemParameter parameter : systemParameterList) {
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadKtp") == 0) {
+                    filePathUploadKtp = parameter.getParameter_value();
+                }
+            }
+            try {
+                session = new JSch().getSession(sftpUser, sftpUrl, 22);
+                session.setPassword(sftpPassword);
+                session.setConfig("StrictHostKeyChecking", "no");
+                session.connect();
+                channel = (ChannelSftp) session.openChannel("sftp");
+                channel.connect();
+                String fileName = "";
+                Vector<ChannelSftp.LsEntry> dataKtpFile = channel.ls(filePathUploadKtp);
+                for (ChannelSftp.LsEntry lsEntry : dataKtpFile) {
+                    if (!lsEntry.getAttrs().isDir()) {
+                        fileName = lsEntry.getFilename();
+                    }
+                }
+
+                if (!fileName.isEmpty()) {
+                    InputStream inputStream = channel.get(filePathUploadKtp + fileName);
+                    byte[] bytes = IOUtils.toByteArray(inputStream);
+                    String base64 = Base64.getEncoder().encodeToString(bytes);
+                    BaseResponse uploadKtpResult = uploadKtpFile(fileName, base64);
+                    if (uploadKtpResult.isSuccess()) {
+                        channel.rm(filePathUploadKtp + fileName);
+                    }
+
+                }
+            } catch (Exception e) {
+                logger.info("500 : Error while check file on SFTP");
+            } finally {
+                if (session.isConnected() || session != null) {
+                    session.disconnect();
+                }
+                if (channel.isConnected() || channel != null) {
+                    channel.disconnect();
+                }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 0/30 * * * *")
+    public void scheduledUploadDmaFile() throws Exception {
+        Session session = null;
+        ChannelSftp channel = null;
+        logger.info("Starting auto upload DMA file");
+
+        List<DMAFile> onProcessDmaFile = dmaFileRepository.getMatchingOrUploadingFile();
+        String filePathUploadDma = "";
+
+        if (onProcessDmaFile.size() == 0) {
+            List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+            for (SystemParameter parameter : systemParameterList) {
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadDma") == 0) {
+                    filePathUploadDma = parameter.getParameter_value();
+                }
+            }
+            try {
+                session = new JSch().getSession(sftpUser, sftpUrl, 22);
+                session.setPassword(sftpPassword);
+                session.setConfig("StrictHostKeyChecking", "no");
+                session.connect();
+                channel = (ChannelSftp) session.openChannel("sftp");
+                channel.connect();
+                String fileName = "";
+                Vector<ChannelSftp.LsEntry> dataDmaFile = channel.ls(filePathUploadDma);
+                for (ChannelSftp.LsEntry lsEntry : dataDmaFile) {
+                    if (!lsEntry.getAttrs().isDir()) {
+                        fileName = lsEntry.getFilename();
+                    }
+                }
+
+                if (!fileName.isEmpty()) {
+                    InputStream inputStream = channel.get(filePathUploadDma + fileName);
+                    byte[] bytes = IOUtils.toByteArray(inputStream);
+                    String base64 = Base64.getEncoder().encodeToString(bytes);
+                    BaseResponse uploadDmaResult = uploadDmaFile(fileName, base64);
+                    if (uploadDmaResult.isSuccess()) {
+                        channel.rm(filePathUploadDma + fileName);
+                    }
+
+                }
+            } catch (Exception e) {
+                logger.info("500 : Error while check file on SFTP");
+            } finally {
+                if (session.isConnected() || session != null) {
+                    session.disconnect();
+                }
+                if (channel.isConnected() || channel != null) {
+                    channel.disconnect();
+                }
+            }
+        }
+    }
+
 
 }
