@@ -92,6 +92,9 @@ public class DataService {
     @Autowired
     SummaryMatchingDetailRepository summaryMatchingDetailRepository;
 
+    @Autowired
+    ReportRepository reportRepository;
+
 
     @Value("${file.path.sdn}")
     private String filePathSdn;
@@ -1466,6 +1469,90 @@ public class DataService {
         return result;
     }
 
+    //REPORT
+    public BaseResponse getReportList(String input) throws Exception {
+        BaseResponse response = new BaseResponse();
+        List result = new ArrayList();
+        Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+
+            String start_date = jsonInput.getString("start_date");
+            String end_date = jsonInput.getString("end_date");
+            if (start_date.compareToIgnoreCase("") == 0 || end_date.compareToIgnoreCase("") == 0) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage("start date AND end date can't be empty");
+                return response;
+            }
+            reportRepository.deleteAll();
+            logger.info("start_date : " + start_date);
+            logger.info("end_date : " + end_date);
+
+            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+            //Token Auth
+            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+                response.setStatus("401");
+                response.setSuccess(false);
+                response.setMessage("Token Authentication Failed");
+                return response;
+            }
+            String userOnProcess = auth.get("user_name").toString();
+            createLog(input, userOnProcess, "getReport");
+
+            List<SummaryMatching> dataMatching = summaryMatchingRepository.getSummaryMatchingByStartdEndDate(start_date, end_date);
+            for (int i = 0; i < dataMatching.size(); i++) {
+                SummaryMatching summaryMatching = dataMatching.get(i);
+                Report sdnReport = new Report();
+                Report consolidateReport = new Report();
+                //SDN
+                sdnReport.setStatus("active");
+                sdnReport.setExtract_date(summaryMatching.getExtract_date_sdn());
+                sdnReport.setOfac_list_screened("SDN List");
+                sdnReport.setStart_date(summaryMatching.getStart_matching().toString());
+                sdnReport.setEnd_date(summaryMatching.getEnd_matching().toString());
+                sdnReport.setPositive(summaryMatching.getCount_positive_sdn());
+                sdnReport.setPotential(summaryMatching.getCount_potential_sdn());
+                sdnReport.setTotal_screened(summaryMatching.getScreen_data());
+                sdnReport.setTotal_data(summaryMatching.getSdn_data());
+                sdnReport.setCreated_by("SYSTEM-AUTO");
+                sdnReport.setUpdated_by("SYSTEM-AUTO");
+                sdnReport.setCreated_date(newInputDate);
+                sdnReport.setUpdated_date(newInputDate);
+                reportRepository.save(sdnReport);
+
+                //CONSOLIDATE
+                consolidateReport.setStatus("active");
+                consolidateReport.setExtract_date(summaryMatching.getExtract_date_consolidate());
+                consolidateReport.setOfac_list_screened("Consolidated List");
+                consolidateReport.setStart_date(summaryMatching.getStart_matching().toString());
+                consolidateReport.setEnd_date(summaryMatching.getEnd_matching().toString());
+                consolidateReport.setPositive(summaryMatching.getCount_positive_consolidate());
+                consolidateReport.setPotential(summaryMatching.getCount_potential_consolidate());
+                consolidateReport.setTotal_screened(summaryMatching.getScreen_data());
+                consolidateReport.setTotal_data(summaryMatching.getConsolidate_data());
+                consolidateReport.setCreated_by("SYSTEM-AUTO");
+                consolidateReport.setUpdated_by("SYSTEM-AUTO");
+                consolidateReport.setCreated_date(newInputDate);
+                consolidateReport.setUpdated_date(newInputDate);
+                reportRepository.save(consolidateReport);
+            }
+            result = reportRepository.findAll();
+
+
+            response.setData(result);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("Report Listed");
+        } catch (Exception e) {
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+            logger.info("Exception : " + e.getMessage());
+        }
+
+        return response;
+    }
 
     //LOGGER
     public void createLog(String input, String userOnProcess, String service_name) throws ParseException {
@@ -1479,7 +1566,7 @@ public class DataService {
     }
 
     //SCHEDULER KTP-DMA
-    @Scheduled(cron = "0 0/30 * * * *")
+    @Scheduled(cron = "0 0/45 * * * *")
     public void scheduledUploadKtpFile() throws Exception {
         Session session = null;
         ChannelSftp channel = null;
@@ -1533,7 +1620,7 @@ public class DataService {
         }
     }
 
-    @Scheduled(cron = "0 0/30 * * * *")
+    @Scheduled(cron = "0 0/45 * * * *")
     public void scheduledUploadDmaFile() throws Exception {
         Session session = null;
         ChannelSftp channel = null;
@@ -1628,6 +1715,12 @@ public class DataService {
             int countDmaEntry = dmaDetailRepository.getDmaEntryCount();
             int countKtpEntry = ktpDetailRepository.getDmaEntryCount();
 
+            int countScreenData = dmaDetailRepository.getScreenData();
+
+            //Extract Date
+            String extract_date_sdn = sdnFileRepository.getFileById(sdnFileId).getCreated_date().toString();
+            String extract_date_consolidate = sdnFileRepository.getFileById(consalFileId).getCreated_date().toString();
+
 //            logger.info("matching on process");
 
             SummaryMatching summaryMatching = new SummaryMatching();
@@ -1640,6 +1733,9 @@ public class DataService {
             summaryMatching.setConsolidate_data(countConsalEntry);
             summaryMatching.setKtp_data(countKtpEntry);
             summaryMatching.setDma_data(countDmaEntry);
+            summaryMatching.setScreen_data(countScreenData);
+            summaryMatching.setExtract_date_sdn(extract_date_sdn);
+            summaryMatching.setExtract_date_consolidate(extract_date_consolidate);
             summaryMatching.setStart_matching(newInputDate);
             summaryMatching.setEnd_matching(newInputDate);
             summaryMatching.setCreated_by("SYSTEM-AUTO");
@@ -1653,11 +1749,39 @@ public class DataService {
             summaryMatchingDetailRepository.matchingPositive();
             summaryMatchingDetailRepository.matchingPotential();
 
-            int summaryMatchingDetailPositive = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("positive");
-            int summaryMatchingDetailPotential = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("potential");
+            List<Integer> ktpDetailIdPotential = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("potential");
+            List<Integer> ktpDetailIdPositive = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("positive");
+            int sdnMatchPositive = 0;
+            int sdnMatchPotential = 0;
+            int consolidateMatchPositive = 0;
+            int consolidateMatchPotential = 0;
 
-            summaryMatchingRepository.updateSummaryMatching(summaryMatchingDetailPositive, summaryMatchingDetailPotential, sdnFileId, consalFileId, dmaFileId, ktpFileId);
+            for (int i = 0; i < ktpDetailIdPositive.size(); i++) {
+                SummaryMatchingDetail summaryMatchingDetail = summaryMatchingDetailRepository.getSummaryDetailByKtpDetailId(ktpDetailIdPositive.get(i));
+                SdnFile sdnFiles = sdnFileRepository.getSdnFileByEntryId(summaryMatchingDetail.getSdn_entry_id());
+                if (sdnFiles.getFile_type().compareToIgnoreCase("sdn") == 0) {
+                    sdnMatchPositive++;
+                } else if (sdnFiles.getFile_type().compareToIgnoreCase("consal") == 0) {
+                    consolidateMatchPositive++;
+                }
+            }
 
+            for (int i = 0; i < ktpDetailIdPotential.size(); i++) {
+                SummaryMatchingDetail summaryMatchingDetail = summaryMatchingDetailRepository.getSummaryDetailByKtpDetailId(ktpDetailIdPotential.get(i));
+                SdnFile sdnFiles = sdnFileRepository.getSdnFileByEntryId(summaryMatchingDetail.getSdn_entry_id());
+                if (sdnFiles.getFile_type().compareToIgnoreCase("sdn") == 0) {
+                    sdnMatchPotential++;
+                } else if (sdnFiles.getFile_type().compareToIgnoreCase("consal") == 0) {
+                    consolidateMatchPotential++;
+                }
+            }
+
+//
+//            int summaryMatchingDetailPositive = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("positive");
+//            int summaryMatchingDetailPotential = summaryMatchingDetailRepository.getDistinctMatchingDetailByStatus("potential");
+//
+            summaryMatchingRepository.updateSummaryMatching(sdnMatchPositive, consolidateMatchPositive, sdnMatchPotential, consolidateMatchPotential, sdnFileId, consalFileId, dmaFileId, ktpFileId);
+//
             //UPDATE STATUS FILES ON PROCESS
             sdnFileRepository.updateFileStatus(sdnFileId, "matched", " -matching done");
             sdnFileRepository.updateFileStatus(consalFileId, "matched", " -matching done");
@@ -1665,7 +1789,7 @@ public class DataService {
             ktpFileRepository.updateFileStatus(ktpFileId, "matched", " -matching done");
 
 
-//            logger.info("matching done !!");
+            logger.info("matching done !!");
         }
 
 

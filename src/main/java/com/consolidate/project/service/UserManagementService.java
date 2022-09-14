@@ -1,10 +1,7 @@
 package com.consolidate.project.service;
 
 import com.consolidate.project.model.*;
-import com.consolidate.project.repository.RoleRepository;
-import com.consolidate.project.repository.SdnLoggerRepository;
-import com.consolidate.project.repository.SystemParameterRepository;
-import com.consolidate.project.repository.UserRepository;
+import com.consolidate.project.repository.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +26,9 @@ public class UserManagementService {
 
     @Autowired
     SystemParameterRepository systemParameterRepository;
+
+    @Autowired
+    PrivilegeRepository privilegeRepository;
 
     //User Section
     public BaseResponse<String> addUsers(String input) throws Exception {
@@ -231,8 +231,15 @@ public class UserManagementService {
 
             for (int i = 0; i < dataLoginUser.size(); i++) {
                 List<Role> roles = roleRepository.getRoleById(dataLoginUser.get(i).getRole_id());
+                List<Privilege> privileges = privilegeRepository.getPrivilegeByRoleId(roles.get(0).getRole_id());
+                List<String> menuNames = new ArrayList();
+                String menu_name = privileges.get(0).getMenu_name();
+                menu_name = menu_name.replace("[", "").replace("]", "");
+                String[] menuArray = menu_name.split(",");
+                menuNames = Arrays.asList(menuArray);
                 result.put("User", dataLoginUser.get(i));
                 result.put("Role", roles.get(0));
+                result.put("Privilege", menuNames);
             }
             for (int i = 0; i < dataLoginUser.size(); i++) {
                 dataLoginUser.get(i).setUser_password("null");
@@ -365,7 +372,7 @@ public class UserManagementService {
             }
             String userOnProcess = auth.get("user_name").toString();
             createLog(input, userOnProcess, "addRole");
-            role_name = jsonInput.optString("role_name");
+            role_name = jsonInput.optString("role_name") + "%";
             //Existing Role Name check
             List<Role> roleNameCheckResult = roleRepository.getRoleByName(role_name);
             if (roleNameCheckResult.size() > 0) {
@@ -382,6 +389,12 @@ public class UserManagementService {
             roles.setCreated_date(newInputDate);
             roles.setUpdated_date(newInputDate);
             roleRepository.save(roles);
+
+            //SET DEFAULT PRIVILEGE TO INSERTED ROLE
+            Role roleInserted = roleRepository.getRoleByName(role_name).get(0);
+            int roleIdInserted = roleInserted.getRole_id();
+            privilegeRepository.insertGeneralMenuName(roleIdInserted);
+
             response.setStatus("200");
             response.setSuccess(true);
             response.setMessage("Role successfully Added");
@@ -648,6 +661,83 @@ public class UserManagementService {
             response.setMessage("System parameter successfully deleted");
         } catch (Exception e) {
             response.setStatus("0");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
+    }
+
+
+    //PRIVILEGE
+    public BaseResponse<List<Map<String, Object>>> getAllPrivilege(String input) throws Exception, SQLException {
+        BaseResponse response = new BaseResponse<>();
+        List result = new ArrayList();
+        JSONObject jsonInput;
+        try {
+            jsonInput = new JSONObject(input);
+            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+
+            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+                response.setStatus("0");
+                response.setSuccess(false);
+                response.setMessage("Token Authentication Failed");
+                return response;
+            }
+            String userOnProcess = auth.get("user_name").toString();
+            createLog(input, userOnProcess, "getAllPrivilege");
+            List<Role> getAllRole = roleRepository.getRole("%%");
+
+            for (int i = 0; i < getAllRole.size(); i++) {
+                Map<String, Object> resultMap = new HashMap<>();
+                List<Privilege> privileges = privilegeRepository.getPrivilegeByRoleId(getAllRole.get(i).getRole_id());
+                List<String> menuNames = new ArrayList();
+                String menu_name = privileges.get(0).getMenu_name();
+                menu_name = menu_name.replace("[", "").replace("]", "");
+                String[] menuArray = menu_name.split(",");
+                menuNames = Arrays.asList(menuArray);
+                resultMap.put("Role", getAllRole.get(i));
+                resultMap.put("Privilege", menuNames);
+                result.add(resultMap);
+            }
+
+            response.setData(result);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("Privilege Listed");
+        } catch (Exception e) {
+            response.setStatus("0");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
+    }
+
+    public BaseResponse<Privilege> updatePrivilege(String input) throws Exception, SQLException {
+        BaseResponse response = new BaseResponse();
+        String menu_name;
+        int role_id;
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
+            //Token Auth
+            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+                response.setStatus("401");
+                response.setSuccess(false);
+                response.setMessage("Token Authentication Failed");
+                return response;
+            }
+            String userOnProcess = auth.get("user_name").toString();
+            createLog(input, userOnProcess, "updatePrivilege");
+
+            menu_name = jsonInput.optString("menu_name");
+            role_id = jsonInput.optInt("role_id");
+
+            privilegeRepository.updatePrivilegeMenuName(menu_name, userOnProcess, role_id);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("Previlege successfully Updated");
+        } catch (Exception e) {
+            response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
         }

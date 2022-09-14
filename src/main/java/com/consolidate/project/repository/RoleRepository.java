@@ -17,17 +17,17 @@ public interface RoleRepository extends JpaRepository<Role, Integer> {
 
 
     @Query(value = "SELECT * FROM cd.Role WHERE " +
-            "lower(role_name) like lower(:role_name) " +
+            "lower(role_name) like lower(:role_name) AND status <> 'deleted' " +
             "ORDER BY created_date DESC", nativeQuery = true)
     List<Role> getRole(@Param("role_name") String role_name);
 
-    @Query(value = "SELECT * FROM cd.role where role_id=:role_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM cd.role where role_id=:role_id AND status <> 'deleted'", nativeQuery = true)
     List<Role> getRoleById(@Param("role_id") int role_id);
 
     @Query(value = "SELECT * FROM cd.Role WHERE lower(role_name) like lower(:role_name) AND status <> 'deleted'", nativeQuery = true)
     List<Role> getRoleByName(@Param("role_name") String role_name);
 
-    @Query(value = "SELECT * FROM cd.Role WHERE lower(role_name) like lower(:role_name) AND role_id not in (:role_id) AND status not in ('deleted')", nativeQuery = true)
+    @Query(value = "SELECT * FROM cd.Role WHERE lower(role_name) like lower(:role_name) AND role_id not in (:role_id) AND status <> 'deleted'", nativeQuery = true)
     List<Role> getRoleByNameExceptId(@Param("role_name") String role_name, @Param("role_id") int role_id);
 
     @Modifying

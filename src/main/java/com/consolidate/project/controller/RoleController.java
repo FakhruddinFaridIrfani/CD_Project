@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -85,6 +86,18 @@ public class RoleController {
     public BaseResponse<Role> deleteRole(@RequestBody String input) throws Exception, SQLException, ParseException {
         logger.info("Delete role");
         return userManagementService.deleteRole(input);
+    }
+
+    @PostMapping("/getAllPrivilege")
+    public BaseResponse<List<Map<String, Object>>> getAllPrivilege(@RequestBody String input) throws Exception, SQLException, ParseException {
+        logger.info("Get Privilege");
+        return userManagementService.getAllPrivilege(input);
+    }
+
+    @PostMapping("/updatePrivilege")
+    public BaseResponse updatePrivilege(@RequestBody String input) throws Exception, SQLException, ParseException {
+        logger.info("Update Privilege");
+        return userManagementService.updatePrivilege(input);
     }
 
 }

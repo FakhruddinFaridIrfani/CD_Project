@@ -3,7 +3,6 @@ package com.consolidate.project.controller;
 
 import com.consolidate.project.model.BaseResponse;
 import com.consolidate.project.service.DataService;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -14,13 +13,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+//import org.postgresql.copy.*;
+//import org.postgresql.copy.CopyManager;
+
+
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -166,4 +172,54 @@ public class DataController {
         }
         return response;
     }
+
+    @PostMapping("/getReportList")
+    public BaseResponse getReportList(@RequestBody String input) throws Exception {
+        logger.info("Get report");
+        return dataService.getReportList(input);
+    }
+
+//    @PostMapping("/downloadReport")
+//    public Object downloadReport(String input) throws Exception {
+//        Session session = null;
+//        ChannelSftp channel = null;
+//        HttpHeaders headers = new HttpHeaders();
+//        String fileName = "";
+////        PGConnection pgConnection =null;
+////        CopyManager copyManager = null;
+//        try {
+//
+//            session = new JSch().getSession(sftpUser, sftpUrl, 22);
+//            session.setPassword(sftpPassword);
+//            session.setConfig("StrictHostKeyChecking", "no");
+//            session.connect();
+//            channel = (ChannelSftp) session.openChannel("sftp");
+//            channel.connect();
+//
+//
+//            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+//            headers.add("Pragma", "no-cache");
+//            headers.add("Expires", "0");
+//            headers.add("Content-Disposition", "attachment;filename=" + fileName);
+//            headers.add("Access-Control-Expose-Headers", "Content-Disposition");
+//
+//
+//        } catch (Exception e) {
+//            BaseResponse response = new BaseResponse();
+//            logger.info("Exception : " + e.getMessage());
+//            response.setMessage("cannot connect to SFTP");
+//            response.setStatus("0");
+//            response.setSuccess(false);
+//            return response;
+//        } finally {
+//            if (session.isConnected() || session != null) {
+//                session.disconnect();
+//            }
+//            if (channel.isConnected() || channel != null) {
+//                channel.disconnect();
+//            }
+//        }
+//        return ResponseEntity.ok().headers(headers).contentLength(10)
+//                .contentType(MediaType.parseMediaType("application/octet-stream")).body("A");
+//    }
 }

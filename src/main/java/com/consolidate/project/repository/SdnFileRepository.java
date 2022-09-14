@@ -35,4 +35,13 @@ public interface SdnFileRepository extends JpaRepository<SdnFile, Integer> {
     SdnFile getFileToBDeleted(@Param("file_type") String file_type);
 
 
+    @Query(value = "SELECT * FROM cd.sdn_file where sdnfile_id = :sdnfile_id", nativeQuery = true)
+    SdnFile getFileById(@Param("sdnfile_id") int sdnfile_id);
+
+    @Query(value = "select * from cd.sdn_file sf " +
+            "INNER JOIN cd.sdn_entry entry ON entry.sdnfile_id = sf.sdnfile_id " +
+            "where entry.sdn_entry_id =:sdn_entry_id", nativeQuery = true)
+    SdnFile getSdnFileByEntryId(@Param("sdn_entry_id") int sdn_entry_id);
+
+
 }

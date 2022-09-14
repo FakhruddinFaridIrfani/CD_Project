@@ -19,4 +19,8 @@ public interface DmaDetailRepository extends JpaRepository<DMADetail, Integer> {
     @Query(value = "SELECT COUNT(*) FROM cd.dma_detail",nativeQuery = true)
     int getDmaEntryCount();
 
+    @Query(value = "select count(dma.*) from " +
+            "cd.dma_detail dma " +
+            "INNER JOIN cd.ktp_detail ktp ON dma.merchant_no = ktp.merchant_no ",nativeQuery = true)
+    int getScreenData();
 }

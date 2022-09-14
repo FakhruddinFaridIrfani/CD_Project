@@ -56,6 +56,9 @@ public interface UserRepository extends JpaRepository<Users, Integer> {
     @Query(value = "SELECT * FROM cms.user_role WHERE role_id =:role_id and status <>'deleted'", nativeQuery = true)
     List<Users> getUserByRoleId(@Param("role_id") int role_id);
 
+    @Query(value = "SELECT * FROM cms.user_role WHERE user_id =:user_id and status <>'deleted'", nativeQuery = true)
+    List<Users> getUserById(@Param("user_id") int user_id);
+
     @Query(value = "SELECT * FROM cd.Users " +
             "where user_name =:user_name AND user_password = crypt(:user_password, user_password)", nativeQuery = true)
     List<Users> loginUser(@Param("user_name") String user_name, @Param("user_password") String user_password);

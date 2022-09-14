@@ -21,11 +21,11 @@ public class SummaryMatching {
     private String status;
 
     @NotNull
-    @Column(name = "sdnfile_id_sdn")
+    @Column(name = "sdn_file_id_sdn")
     int sdnfile_id_sdn;
 
     @NotNull
-    @Column(name = "sdnfile_id_consolidate")
+    @Column(name = "sdn_file_id_consolidate")
     int sdnfile_id_consolidate;
 
     @NotNull
@@ -49,6 +49,9 @@ public class SummaryMatching {
     @Column(name = "dma_data")
     int dma_data;
 
+    @Column(name = "screen_data")
+    int screen_data;
+
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Jakarta")
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
@@ -62,11 +65,23 @@ public class SummaryMatching {
     private Date end_matching;
 
 
-    @Column(name = "count_positive")
-    int count_positive;
+    @Column(name = "count_positive_sdn")
+    int count_positive_sdn;
 
-    @Column(name = "count_potential")
-    int count_potential;
+    @Column(name = "count_positive_consolidate")
+    int count_positive_consolidate;
+
+    @Column(name = "count_potential_sdn")
+    int count_potential_sdn;
+
+    @Column(name = "count_potential_consolidate")
+    int count_potential_consolidate;
+
+    @Column(name = "extract_date_sdn")
+    String extract_date_sdn;
+
+    @Column(name = "extract_date_consolidate")
+    String extract_date_consolidate;
 
 
     @Column(name = "created_by")
@@ -184,20 +199,36 @@ public class SummaryMatching {
         this.end_matching = end_matching;
     }
 
-    public int getCount_positive() {
-        return count_positive;
+    public int getCount_positive_sdn() {
+        return count_positive_sdn;
     }
 
-    public void setCount_positive(int count_positive) {
-        this.count_positive = count_positive;
+    public void setCount_positive_sdn(int count_positive_sdn) {
+        this.count_positive_sdn = count_positive_sdn;
     }
 
-    public int getCount_potential() {
-        return count_potential;
+    public int getCount_positive_consolidate() {
+        return count_positive_consolidate;
     }
 
-    public void setCount_potential(int count_potential) {
-        this.count_potential = count_potential;
+    public void setCount_positive_consolidate(int count_positive_consolidate) {
+        this.count_positive_consolidate = count_positive_consolidate;
+    }
+
+    public int getCount_potential_sdn() {
+        return count_potential_sdn;
+    }
+
+    public void setCount_potential_sdn(int count_potential_sdn) {
+        this.count_potential_sdn = count_potential_sdn;
+    }
+
+    public int getCount_potential_consolidate() {
+        return count_potential_consolidate;
+    }
+
+    public void setCount_potential_consolidate(int count_potential_consolidate) {
+        this.count_potential_consolidate = count_potential_consolidate;
     }
 
     public String getCreated_by() {
@@ -230,5 +261,29 @@ public class SummaryMatching {
 
     public void setUpdated_date(Date updated_date) {
         this.updated_date = updated_date;
+    }
+
+    public int getScreen_data() {
+        return screen_data;
+    }
+
+    public void setScreen_data(int screen_data) {
+        this.screen_data = screen_data;
+    }
+
+    public String getExtract_date_sdn() {
+        return extract_date_sdn;
+    }
+
+    public void setExtract_date_sdn(String extract_date_sdn) {
+        this.extract_date_sdn = extract_date_sdn;
+    }
+
+    public String getExtract_date_consolidate() {
+        return extract_date_consolidate;
+    }
+
+    public void setExtract_date_consolidate(String extract_date_consolidate) {
+        this.extract_date_consolidate = extract_date_consolidate;
     }
 }
