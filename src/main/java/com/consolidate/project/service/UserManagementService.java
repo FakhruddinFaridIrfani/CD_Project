@@ -104,7 +104,7 @@ public class UserManagementService {
                 status = "%%";
             }
             role_id = jsonInput.optInt("role_id") + "";
-            if (role_id.compareToIgnoreCase("null") == 0 || role_id.compareToIgnoreCase("500") == 0) {
+            if (role_id.compareToIgnoreCase("null") == 0 || role_id.compareToIgnoreCase("0") == 0) {
                 role_id = "%%";
             }
             List<Users> getUserResult = userRepository.getUsersList(user_name, user_organization, role_id, status, user_full_name);
@@ -372,7 +372,7 @@ public class UserManagementService {
             }
             String userOnProcess = auth.get("user_name").toString();
             createLog(input, userOnProcess, "addRole");
-            role_name = jsonInput.optString("role_name") + "%";
+            role_name = jsonInput.optString("role_name");
             //Existing Role Name check
             List<Role> roleNameCheckResult = roleRepository.getRoleByName(role_name);
             if (roleNameCheckResult.size() > 0) {

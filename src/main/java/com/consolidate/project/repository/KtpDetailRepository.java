@@ -18,7 +18,10 @@ public interface KtpDetailRepository extends JpaRepository<KTPDetail, Integer> {
     @Query(value = "DELETE FROM cd.ktp_detail WHERE ktp_file_id=:ktp_file_id ", nativeQuery = true)
     void deleteKtpDetailByFileId(@Param("ktp_file_id") int ktp_file_id);
 
-    @Query(value = "SELECT COUNT(*) FROM cd.ktp_detail",nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM cd.ktp_detail", nativeQuery = true)
     int getDmaEntryCount();
+
+    @Query(value = "SELECT * FROM cd.ktp_detail WHERE ktp_detail_id = :ktp_detail_id", nativeQuery = true)
+    KTPDetail getKTPDetailById(@Param("ktp_detail_id") int ktp_detail_id);
 
 }

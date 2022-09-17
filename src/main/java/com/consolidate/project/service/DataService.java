@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -95,6 +96,9 @@ public class DataService {
     @Autowired
     ReportRepository reportRepository;
 
+    @Autowired
+    SdnNotificationRepository sdnNotificationRepository;
+
 
     @Value("${file.path.sdn}")
     private String filePathSdn;
@@ -122,7 +126,19 @@ public class DataService {
 
 
     //FILE SECTION
-    public BaseResponse uploadSdnFile(String input) throws Exception {
+
+    public BaseResponse uploadFile(String string) throws Exception {
+        BaseResponse response = new BaseResponse();
+
+        uploadSdnFile(string);
+        response.setStatus("200");
+        response.setSuccess(true);
+        response.setMessage("File upload on progress");
+        return response;
+    }
+
+    @Async
+    public void uploadSdnFile(String input) throws Exception {
         BaseResponse response = new BaseResponse();
         SdnFile sdnFile = new SdnFile();
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -136,7 +152,7 @@ public class DataService {
                 response.setSuccess(false);
                 response.setMessage("Allowed file extension is XML");
                 logger.info("Allowed file extension is XML");
-                return response;
+                throw new Exception("Allowed file extension is XML");
             }
 
 
@@ -149,10 +165,18 @@ public class DataService {
                 response.setStatus("401");
                 response.setSuccess(false);
                 response.setMessage("Token Authentication Failed");
-                return response;
+                throw new Exception("Token Authentication Failed");
             }
             String userOnProcess = auth.get("user_name").toString();
             createLog(jsonInput.getString("file_name"), userOnProcess, "uploadFile");
+            String file_type_name = "";
+            if (file_type.compareToIgnoreCase("consal") == 0) {
+                file_type_name = "CONSOLIDATE";
+            } else {
+                file_type_name = "SDN";
+            }
+            createNotification(userOnProcess + " uploading " + file_type_name + " : " + fileName + " on ");
+
 
             Map<String, Object> fileTypeCheck = checkAllowedFileType(file_type);
             if ((Boolean) fileTypeCheck.get("matched") == false) {
@@ -160,7 +184,7 @@ public class DataService {
                 response.setSuccess(false);
                 response.setMessage(fileTypeCheck.get("message").toString());
                 logger.info("error on check file_type process : " + fileTypeCheck.get("message"));
-                return response;
+                throw new Exception("error on check file_type process : " + fileTypeCheck.get("message"));
             }
 
 //            List<SdnFile> uploadingFile = sdnFileRepository.getMatchingOrUploadingFile(file_type);
@@ -173,7 +197,7 @@ public class DataService {
 //            }
             BaseResponse canUpload = checkUploadingOrMatchingFile(file_type);
             if (canUpload.isSuccess() == false) {
-                return canUpload;
+                throw new Exception(canUpload.getMessage());
             }
 
 
@@ -183,7 +207,8 @@ public class DataService {
                 response.setSuccess(false);
                 response.setMessage("file data can't be null or empty");
                 logger.info("file data can't be null or empty");
-                return response;
+                throw new Exception("file data can't be null or empty");
+
             }
 
 
@@ -198,7 +223,7 @@ public class DataService {
                 response.setSuccess(false);
                 response.setMessage("Failed save file to SFTP : " + fileUploadProcess.getMessage());
                 logger.info("failed");
-                return response;
+                throw new Exception("Failed save file to SFTP : " + fileUploadProcess.getMessage());
             }
 
             //CLEARING CURRENT DATA ON DB
@@ -679,6 +704,7 @@ public class DataService {
             }
             sdnFileRepository.updateFileStatus(currentSdnFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + fileName);
+            createNotification(file_type_name + " : " + fileName + " uploaded on ");
             inputStream.close();
 
             response.setData(savedFileName);
@@ -698,7 +724,6 @@ public class DataService {
             sdnFileRepository.updateFileStatus(currentSdnFileId, "uploading-failed", " -Failed during upload process : " + e.getMessage());
             logger.info("Exception :" + e.getMessage());
         }
-        return response;
     }
 
     public BaseResponse uploadKtpFile(String file_name, String file_data) throws Exception {
@@ -707,7 +732,7 @@ public class DataService {
         int currentKTPFileId = 0;
         try {
             String file_type = "ktp";
-
+            createNotification("NEW KTP File uploading on ");
 //            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
 //            //Token Auth
 //            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
@@ -828,6 +853,7 @@ public class DataService {
             inputStream.close();
             ktpFileRepository.updateFileStatus(currentKTPFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
+            createNotification("NEW KTP File uploaded on ");
 
 
             response.setData(savedFileName);
@@ -857,7 +883,7 @@ public class DataService {
         int currentDMAFileId = 0;
         try {
             String file_type = "dma";
-
+            createNotification("NEW DMA File uploading on ");
 //            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
 //            //Token Auth
 //            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
@@ -942,6 +968,7 @@ public class DataService {
             inputStream.close();
             dmaFileRepository.updateFileStatus(currentDMAFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
+            createNotification("NEW DMA File uploaded on ");
 
 
             response.setData(savedFileName);
@@ -1565,6 +1592,17 @@ public class DataService {
         sdnLoggerRepository.save(sdnLogger);
     }
 
+    //NOTIFICATION
+    public void createNotification(String message) throws ParseException {
+        Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        SdnNotification sdnNotification = new SdnNotification();
+        sdnNotification.setNotification_message(message);
+        sdnNotification.setCreated_by("SYSTEM");
+        sdnNotification.setCreated_date(newInputDate);
+        sdnNotificationRepository.save(sdnNotification);
+    }
+
+
     //SCHEDULER KTP-DMA
     @Scheduled(cron = "0 0/45 * * * *")
     public void scheduledUploadKtpFile() throws Exception {
@@ -1695,6 +1733,7 @@ public class DataService {
 //            count++;
 //        }
         if (sdnFile.size() > 0 && consalFile.size() > 0 && dmaFile.size() > 0 && ktpFile.size() > 0) {
+            createNotification("Matching process started on ");
 
             Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             //FILE - FILE ON MATCHING PROCESS
@@ -1790,6 +1829,7 @@ public class DataService {
 
 
             logger.info("matching done !!");
+            createNotification("Matching process finished on ");
         }
 
 
