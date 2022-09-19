@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "summary_matching", schema = "cd")
+@Table(name = "summary_matching", schema = "ofac")
 public class SummaryMatching {
     @Id
     @Column(name = "summary_matching_id", columnDefinition = "serial")

@@ -627,7 +627,7 @@ public class UserManagementService {
                 response.setMessage("Parameter name already exist / used");
                 return response;
             }
-            systemParameterRepository.updateSystemParameter(parameter_name, parameter_value, userOnProcess, status, systemparameter_id);
+            systemParameterRepository.updateSystemParameter(parameter_value, userOnProcess, status, systemparameter_id);
             response.setStatus("200");
             response.setSuccess(true);
             response.setMessage("System parameter successfully Updated");

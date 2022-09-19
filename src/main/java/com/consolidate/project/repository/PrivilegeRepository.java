@@ -15,19 +15,19 @@ import java.util.List;
 @Transactional
 public interface PrivilegeRepository extends JpaRepository<Privilege, Integer> {
 
-    @Query(value = "SELECT * FROM cd.privilege where role_id = :role_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.privilege where role_id = :role_id", nativeQuery = true)
     List<Privilege> getPrivilegeByRoleId(@Param("role_id") int role_id);
 
     @Modifying
-    @Query(value = "UPDATE cd.privilege SET menu_name = :menu_name,updated_by=:updated_by,updated_date = current_timestamp where role_id = :role_id", nativeQuery = true)
+    @Query(value = "UPDATE ofac.privilege SET menu_name = :menu_name,updated_by=:updated_by,updated_date = current_timestamp where role_id = :role_id", nativeQuery = true)
     void updatePrivilegeMenuName(@Param("menu_name") String menu_name, @Param("updated_by") String updated_by, @Param("role_id") int role_id);
 
     @Modifying
-    @Query(value = "INSERT INTO cd.privilege (status,role_id,menu_name,created_by,created_date,updated_by,updated_date) VALUES ('active',:role_id,'[]','SYSTEM',current_timestamp,'SYSTEM',current_timestamp)", nativeQuery = true)
+    @Query(value = "INSERT INTO ofac.privilege (status,role_id,menu_name,created_by,created_date,updated_by,updated_date) VALUES ('active',:role_id,'[]','SYSTEM',current_timestamp,'SYSTEM',current_timestamp)", nativeQuery = true)
     void insertGeneralMenuName(@Param("role_id") int role_id);
 
-//    @Query(value = "SELECT priv.* FROM cd.privilege priv " +
-//            "INNER JOIN cd.role ro ON ro.role_id = priv.role_id " +
+//    @Query(value = "SELECT priv.* FROM ofac.privilege priv " +
+//            "INNER JOIN ofac.role ro ON ro.role_id = priv.role_id " +
 //            "Where ro.status = 'active'", nativeQuery = true)
 //    List<Privilege> getAllPrivilege();
 

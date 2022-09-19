@@ -16,11 +16,11 @@ import java.util.List;
 public interface DmaDetailRepository extends JpaRepository<DMADetail, Integer> {
 
 
-    @Query(value = "SELECT COUNT(*) FROM cd.dma_detail",nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM ofac.dma_detail",nativeQuery = true)
     int getDmaEntryCount();
 
     @Query(value = "select count(dma.*) from " +
-            "cd.dma_detail dma " +
-            "INNER JOIN cd.ktp_detail ktp ON dma.merchant_no = ktp.merchant_no ",nativeQuery = true)
+            "ofac.dma_detail dma " +
+            "INNER JOIN ofac.ktp_detail ktp ON dma.merchant_no = ktp.merchant_no ",nativeQuery = true)
     int getScreenData();
 }

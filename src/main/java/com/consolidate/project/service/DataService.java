@@ -100,42 +100,7 @@ public class DataService {
     SdnNotificationRepository sdnNotificationRepository;
 
 
-    @Value("${file.path.sdn}")
-    private String filePathSdn;
-
-    @Value("${file.path.consolidate}")
-    private String filePathConsolidate;
-
-    @Value("${file.path.ktp}")
-    private String filePathKtp;
-
-    @Value("${file.path.dma}")
-    private String filePathDma;
-
-    @Value("${file.path.report")
-    private String filePathReport;
-
-    @Value("${sftp.user.name}")
-    private String sftpUser;
-
-    @Value("${sftp.user.password}")
-    private String sftpPassword;
-
-    @Value("${sftp.url}")
-    private String sftpUrl;
-
-
     //FILE SECTION
-
-    public BaseResponse uploadFile(String string) throws Exception {
-        BaseResponse response = new BaseResponse();
-
-        uploadSdnFile(string);
-        response.setStatus("200");
-        response.setSuccess(true);
-        response.setMessage("File upload on progress");
-        return response;
-    }
 
     @Async
     public void uploadSdnFile(String input) throws Exception {
@@ -706,6 +671,7 @@ public class DataService {
             logger.info("Uploading complete for  :" + fileName);
             createNotification(file_type_name + " : " + fileName + " uploaded on ");
             inputStream.close();
+            summaryMatchingDetailRepository.deleteAll();
 
             response.setData(savedFileName);
             response.setStatus("200");
@@ -1030,6 +996,7 @@ public class DataService {
                 searchSdnOri = sdnEntryRepository.searchDataNameId("sdn", first_name, last_name, id_number);
                 searchConsalOri = sdnEntryRepository.searchDataNameId("consal", first_name, last_name, id_number);
             } else {
+                dob = new SimpleDateFormat("dd MMM yyyy").format(new SimpleDateFormat("dd-MM-yyy").parse(dob));
                 searchSdnOri = sdnEntryRepository.searchDataNameIdDob("sdn", first_name, last_name, id_number, dob);
                 searchConsalOri = sdnEntryRepository.searchDataNameIdDob("consal", first_name, last_name, id_number, dob);
             }
@@ -1243,11 +1210,18 @@ public class DataService {
         Session session = null;
         ChannelSftp channel = null;
         Map<String, String> imageAddResult = new HashMap<>();
-        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
         try {
+            Map<String, String> systemParameter = getSystemParameter();
+            if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage(systemParameter.get("errorMessage"));
+                return response;
+            }
+
             UUID uuid = UUID.randomUUID();
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
+            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+            session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = (ChannelSftp) session.openChannel("sftp");
@@ -1255,29 +1229,13 @@ public class DataService {
 
             String path = "";
             if (folder.compareToIgnoreCase("sdn") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveSdn");
             } else if (folder.compareToIgnoreCase("consolidate") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveConsolidate");
             } else if (folder.compareToIgnoreCase("ktp") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveKtp");
             } else if (folder.compareToIgnoreCase("dma") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveDma");
             } else {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1316,10 +1274,17 @@ public class DataService {
         Session session = null;
         ChannelSftp channel = null;
         Map<String, Object> result = new HashMap<>();
-        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+
         try {
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
+            Map<String, String> systemParameter = getSystemParameter();
+            if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage(systemParameter.get("errorMessage"));
+                return response;
+            }
+            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+            session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = (ChannelSftp) session.openChannel("sftp");
@@ -1327,29 +1292,13 @@ public class DataService {
 
             String path = "";
             if (folder.compareToIgnoreCase("sdn") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveSdn");
             } else if (folder.compareToIgnoreCase("consolidate") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveConsolidate");
             } else if (folder.compareToIgnoreCase("ktp") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveKtp");
             } else if (folder.compareToIgnoreCase("dma") == 0) {
-                for (SystemParameter parameter : systemParameterList) {
-                    if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
-                        path = parameter.getParameter_value();
-                    }
-                }
+                path = systemParameter.get("pathSaveDma");
             } else {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1506,6 +1455,8 @@ public class DataService {
 
             String start_date = jsonInput.getString("start_date");
             String end_date = jsonInput.getString("end_date");
+//            start_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd-MM-yyyy").parse(start_date));
+//            end_date = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd-MM-yyyy").parse(end_date));
             if (start_date.compareToIgnoreCase("") == 0 || end_date.compareToIgnoreCase("") == 0) {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1602,32 +1553,104 @@ public class DataService {
         sdnNotificationRepository.save(sdnNotification);
     }
 
+    //SYSTEM PARAMETER PARSER
+    public Map<String, String> getSystemParameter() throws Exception {
+        Map<String, String> result = new HashMap<>();
+        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+        String sftpUser;
+        String sftpPassword;
+        String sftpUrl;
+        String sftpPort;
+
+        String pathUploadKtp;
+        String pathUploadDma;
+        String pathSaveDma;
+        String pathSaveKtp;
+        String pathSaveSdn;
+        String pathSaveConsolidate;
+        String pathReportFile;
+        try {
+            for (SystemParameter parameter : systemParameterList) {
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpUser") == 0) {
+                    sftpUser = parameter.getParameter_value();
+                    result.put("sftpUser", sftpUser);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpPassword") == 0) {
+                    sftpPassword = parameter.getParameter_value();
+                    result.put("sftpPassword", sftpPassword);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpUrl") == 0) {
+                    sftpUrl = parameter.getParameter_value();
+                    result.put("sftpUrl", sftpUrl);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpPort") == 0) {
+                    sftpPort = parameter.getParameter_value();
+                    result.put("sftpPort", sftpPort);
+                }
+
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadKtp") == 0) {
+                    pathUploadKtp = parameter.getParameter_value();
+                    result.put("pathUploadKtp", pathUploadKtp);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadDma") == 0) {
+                    pathUploadDma = parameter.getParameter_value();
+                    result.put("pathUploadDma", pathUploadDma);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
+                    pathSaveDma = parameter.getParameter_value();
+                    result.put("pathSaveDma", pathSaveDma);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
+                    pathSaveKtp = parameter.getParameter_value();
+                    result.put("pathSaveKtp", pathSaveKtp);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
+                    pathSaveSdn = parameter.getParameter_value();
+                    result.put("pathSaveSdn", pathSaveSdn);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
+                    pathSaveConsolidate = parameter.getParameter_value();
+                    result.put("pathSaveConsolidate", pathSaveConsolidate);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathReportFile") == 0) {
+                    pathReportFile = parameter.getParameter_value();
+                    result.put("pathReportFile", pathReportFile);
+                }
+                result.put("errorMessage", "");
+
+            }
+        } catch (Exception e) {
+            result.put("errorMessage", e.getMessage());
+        }
+
+        return result;
+    }
+
 
     //SCHEDULER KTP-DMA
-    @Scheduled(cron = "0 0/45 * * * *")
+    @Scheduled(cron = "0 0/45 * * * *", zone = "Asia/Jakarta")
     public void scheduledUploadKtpFile() throws Exception {
         Session session = null;
         ChannelSftp channel = null;
         logger.info("Starting auto upload KTP file");
 
         List<KTPFile> onProcessKtpFile = ktpFileRepository.getMatchingOrUploadingFile();
-        String filePathUploadKtp = "";
+
 
         if (onProcessKtpFile.size() == 0) {
-            List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
-            for (SystemParameter parameter : systemParameterList) {
-                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadKtp") == 0) {
-                    filePathUploadKtp = parameter.getParameter_value();
-                }
-            }
             try {
-                session = new JSch().getSession(sftpUser, sftpUrl, 22);
-                session.setPassword(sftpPassword);
+                Map<String, String> systemParameter = getSystemParameter();
+                if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+                    return;
+                }
+                session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+                session.setPassword(systemParameter.get("sftpPassword"));
                 session.setConfig("StrictHostKeyChecking", "no");
                 session.connect();
                 channel = (ChannelSftp) session.openChannel("sftp");
                 channel.connect();
                 String fileName = "";
+                String filePathUploadKtp = systemParameter.get("filePathUploadKtp");
                 Vector<ChannelSftp.LsEntry> dataKtpFile = channel.ls(filePathUploadKtp);
                 for (ChannelSftp.LsEntry lsEntry : dataKtpFile) {
                     if (!lsEntry.getAttrs().isDir()) {
@@ -1636,6 +1659,7 @@ public class DataService {
                 }
 
                 if (!fileName.isEmpty()) {
+                    summaryMatchingDetailRepository.deleteAll();
                     InputStream inputStream = channel.get(filePathUploadKtp + fileName);
                     byte[] bytes = IOUtils.toByteArray(inputStream);
                     String base64 = Base64.getEncoder().encodeToString(bytes);
@@ -1644,9 +1668,11 @@ public class DataService {
                         channel.rm(filePathUploadKtp + fileName);
                     }
 
+                } else {
+                    logger.info("No new KTP file to upload");
                 }
             } catch (Exception e) {
-                logger.info("500 : Error while check file on SFTP");
+                logger.info("500 : Error while check KTP file on SFTP");
             } finally {
                 if (session.isConnected() || session != null) {
                     session.disconnect();
@@ -1658,31 +1684,30 @@ public class DataService {
         }
     }
 
-    @Scheduled(cron = "0 0/45 * * * *")
+    @Scheduled(cron = "0 0/45 * * * *", zone = "Asia/Jakarta")
     public void scheduledUploadDmaFile() throws Exception {
         Session session = null;
         ChannelSftp channel = null;
         logger.info("Starting auto upload DMA file");
 
         List<DMAFile> onProcessDmaFile = dmaFileRepository.getMatchingOrUploadingFile();
-        String filePathUploadDma = "";
+
 
         if (onProcessDmaFile.size() == 0) {
-            List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
-            for (SystemParameter parameter : systemParameterList) {
-                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadDma") == 0) {
-                    filePathUploadDma = parameter.getParameter_value();
-                }
-            }
             try {
-                session = new JSch().getSession(sftpUser, sftpUrl, 22);
-                session.setPassword(sftpPassword);
+                Map<String, String> systemParameter = getSystemParameter();
+                if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+                    return;
+                }
+                session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+                session.setPassword(systemParameter.get("sftpPassword"));
                 session.setConfig("StrictHostKeyChecking", "no");
                 session.connect();
                 channel = (ChannelSftp) session.openChannel("sftp");
                 channel.connect();
                 String fileName = "";
-                Vector<ChannelSftp.LsEntry> dataDmaFile = channel.ls(filePathUploadDma);
+                String pathUploadDma = systemParameter.get("pathUploadDma");
+                Vector<ChannelSftp.LsEntry> dataDmaFile = channel.ls(pathUploadDma);
                 for (ChannelSftp.LsEntry lsEntry : dataDmaFile) {
                     if (!lsEntry.getAttrs().isDir()) {
                         fileName = lsEntry.getFilename();
@@ -1690,17 +1715,20 @@ public class DataService {
                 }
 
                 if (!fileName.isEmpty()) {
-                    InputStream inputStream = channel.get(filePathUploadDma + fileName);
+                    summaryMatchingDetailRepository.deleteAll();
+                    InputStream inputStream = channel.get(pathUploadDma + fileName);
                     byte[] bytes = IOUtils.toByteArray(inputStream);
                     String base64 = Base64.getEncoder().encodeToString(bytes);
                     BaseResponse uploadDmaResult = uploadDmaFile(fileName, base64);
                     if (uploadDmaResult.isSuccess()) {
-                        channel.rm(filePathUploadDma + fileName);
+                        channel.rm(pathUploadDma + fileName);
                     }
 
+                } else {
+                    logger.info("No new DMA file to upload");
                 }
             } catch (Exception e) {
-                logger.info("500 : Error while check file on SFTP");
+                logger.info("500 : Error while check DMA file on SFTP");
             } finally {
                 if (session.isConnected() || session != null) {
                     session.disconnect();
@@ -1712,7 +1740,7 @@ public class DataService {
         }
     }
 
-    @Scheduled(cron = "0 59 23 * * *")
+    @Scheduled(cron = "0 59 23 * * *", zone = "Asia/Jakarta")
     public void matchingProcess() throws Exception {
         logger.info("Starting auto matching");
 //        int count = 0;

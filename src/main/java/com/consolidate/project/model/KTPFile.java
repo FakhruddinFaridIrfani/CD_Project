@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "ktp_file", schema = "cd")
+@Table(name = "ktp_file", schema = "ofac")
 public class KTPFile {
     @Id
     @Column(name = "ktp_file_id", columnDefinition = "serial")

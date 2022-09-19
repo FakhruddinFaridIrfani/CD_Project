@@ -16,9 +16,9 @@ import java.util.List;
 @Transactional
 public interface SdnAkaRepository extends JpaRepository<SdnAka, Integer> {
     @Modifying
-    @Query(value = "DELETE FROM cd.sdn_aka WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "DELETE FROM ofac.sdn_aka WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteAkaBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
-    @Query(value = "SELECT * FROM cd.sdn_aka where sdn_entry_id = :sdn_entry_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_aka where sdn_entry_id = :sdn_entry_id", nativeQuery = true)
     List<SdnAka> getSdnAkaBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

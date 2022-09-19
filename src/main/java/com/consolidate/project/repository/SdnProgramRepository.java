@@ -15,11 +15,11 @@ import java.util.List;
 @Transactional
 public interface SdnProgramRepository extends JpaRepository<SdnProgram, Integer> {
     @Modifying
-    @Query(value = "DELETE FROM cd.sdn_program WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "DELETE FROM ofac.sdn_program WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteProgramBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
 
-    @Query(value = "SELECT * FROM cd.sdn_program WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_program WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     List<SdnProgram> searchProgramBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
 

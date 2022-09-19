@@ -9,7 +9,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "sdn_file", schema = "cd")
+@Table(name = "sdn_file", schema = "ofac")
 public class SdnFile {
     @Id
     @Column(name = "sdnfile_id", columnDefinition = "serial")

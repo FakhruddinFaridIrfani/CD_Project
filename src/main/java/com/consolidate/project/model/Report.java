@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
-@Table(name = "report", schema = "cd")
+@Table(name = "report", schema = "ofac")
 public class Report {
     @Id
     @Column(name = "report_id", columnDefinition = "serial")

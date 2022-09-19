@@ -14,6 +14,6 @@ import java.util.List;
 public interface SdnNotificationRepository extends JpaRepository<SdnNotification, Integer> {
 
 
-    @Query(value = "SELECT * FROM cd.sdn_notification ORDER BY sdn_notification_id DESC LIMIT 10", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_notification ORDER BY sdn_notification_id DESC LIMIT 10", nativeQuery = true)
     List<SdnNotification> getNotification();
 }

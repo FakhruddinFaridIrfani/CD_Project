@@ -16,9 +16,9 @@ import java.util.List;
 public interface SdnIDRepository extends JpaRepository<SdnID, Integer> {
 
     @Modifying
-    @Query(value = "DELETE FROM cd.sdn_id WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "DELETE FROM ofac.sdn_id WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteIDBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
-    @Query(value = "SELECT * FROM cd.sdn_id WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_id WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     List<SdnID> searchIDBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

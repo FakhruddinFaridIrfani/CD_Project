@@ -15,7 +15,7 @@ import java.util.List;
 @Transactional
 public interface ReportRepository extends JpaRepository<Report, Integer> {
 
-    @Query(value = "SELECT * FROM cd.report where report_id = :report_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.report where report_id = :report_id", nativeQuery = true)
     List<Report> getReportById(@Param("report_id") int report_id);
 
 

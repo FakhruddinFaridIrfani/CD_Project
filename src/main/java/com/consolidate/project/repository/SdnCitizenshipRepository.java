@@ -16,9 +16,9 @@ import java.util.List;
 public interface SdnCitizenshipRepository extends JpaRepository<SdnCitizenship, Integer> {
 
     @Modifying
-    @Query(value = "DELETE FROM cd.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "DELETE FROM ofac.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     void deleteCitizenshipBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 
-    @Query(value = "SELECT * FROM cd.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_citizenship WHERE sdn_entry_id=:sdn_entry_id ", nativeQuery = true)
     List<SdnCitizenship> searchCitizenshipBySdnEntryId(@Param("sdn_entry_id") int sdn_entry_id);
 }

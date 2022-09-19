@@ -16,26 +16,26 @@ import java.util.List;
 @Transactional
 public interface SdnEntryRepository extends JpaRepository<SdnEntry, Integer> {
 
-    @Query(value = "SELECT * FROM cd.sdn_entry where uid = :uid AND sdnfile_id =:sdnfile_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_entry where uid = :uid AND sdnfile_id =:sdnfile_id", nativeQuery = true)
     public SdnEntry getSdnEntryBySavedUIDAndFIleID(@Param("uid") int uid, @Param("sdnfile_id") int sdnfile_id);
 
-    @Query(value = "SELECT * FROM cd.sdn_entry WHERE sdnfile_id=:sdnfile_id", nativeQuery = true)
+    @Query(value = "SELECT * FROM ofac.sdn_entry WHERE sdnfile_id=:sdnfile_id", nativeQuery = true)
     List<SdnEntry> getSdnEntryByFileId(@Param("sdnfile_id") int sdnfile_id);
 
     @Modifying
-    @Query(value = "DELETE FROM cd.sdn_entry WHERE sdnfile_id=:sdnfile_id ", nativeQuery = true)
+    @Query(value = "DELETE FROM ofac.sdn_entry WHERE sdnfile_id=:sdnfile_id ", nativeQuery = true)
     void deleteSdnEntryByFileId(@Param("sdnfile_id") int sdnfile_id);
 
-    @Query(value = "select count(*) from cd.sdn_entry where sdnfile_id = :sdnfile_id", nativeQuery = true)
+    @Query(value = "select count(*) from ofac.sdn_entry where sdnfile_id = :sdnfile_id", nativeQuery = true)
     int getEntryCount(@Param("sdnfile_id") int sdnfile_id);
 
 
     @Query(value = "select distinct(se.*) " +
-            "FROM cd.sdn_entry se " +
-            "INNER JOIN cd.sdn_file sf ON sf.sdnfile_id = se.sdnfile_id " +
-            "INNER JOIN cd.sdn_aka aka ON aka.sdn_entry_id = se.sdn_entry_id " +
-            "INNER JOIN cd.sdn_id si ON si.sdn_entry_id = se.sdn_entry_id " +
-            "INNER JOIN cd.sdn_dob sd ON sd.sdn_entry_id = se.sdn_entry_id " +
+            "FROM ofac.sdn_entry se " +
+            "INNER JOIN ofac.sdn_file sf ON sf.sdnfile_id = se.sdnfile_id " +
+            "LEFT JOIN ofac.sdn_aka aka ON aka.sdn_entry_id = se.sdn_entry_id " +
+            "LEFT JOIN ofac.sdn_id si ON si.sdn_entry_id = se.sdn_entry_id " +
+            "LEFT JOIN ofac.sdn_dob sd ON sd.sdn_entry_id = se.sdn_entry_id " +
             "WHERE sf.file_type = :file_type  " +
             "AND (lower(se.first_name) = lower(:first_name) OR lower(se.last_name) = lower(:first_name) OR lower(aka.first_name) = lower(:first_name) OR lower(aka.last_name) = lower(:first_name) " +
             "    OR lower(se.first_name) = lower(:last_name) OR lower(se.last_name) = lower(:last_name) OR lower(aka.first_name) = lower(:last_name) OR lower(aka.last_name) =lower(:last_name) OR si.id_number = :id OR sd.dob = :dob) ORDER BY se.first_name ASC", nativeQuery = true)
@@ -44,10 +44,10 @@ public interface SdnEntryRepository extends JpaRepository<SdnEntry, Integer> {
 
 
     @Query(value = "select distinct(se.*) " +
-            "FROM cd.sdn_entry se " +
-            "INNER JOIN cd.sdn_file sf ON sf.sdnfile_id = se.sdnfile_id " +
-            "INNER JOIN cd.sdn_aka aka ON aka.sdn_entry_id = se.sdn_entry_id " +
-            "INNER JOIN cd.sdn_id si ON si.sdn_entry_id = se.sdn_entry_id " +
+            "FROM ofac.sdn_entry se " +
+            "INNER JOIN ofac.sdn_file sf ON sf.sdnfile_id = se.sdnfile_id " +
+            "LEFT JOIN ofac.sdn_aka aka ON aka.sdn_entry_id = se.sdn_entry_id " +
+            "LEFT JOIN ofac.sdn_id si ON si.sdn_entry_id = se.sdn_entry_id " +
             "WHERE sf.file_type = :file_type  " +
             "AND (lower(se.first_name) = lower(:first_name) OR lower(se.last_name) = lower(:first_name) OR lower(aka.first_name) = lower(:first_name) OR lower(aka.last_name) = lower(:first_name) " +
             "    OR lower(se.first_name) = lower(:last_name) OR lower(se.last_name) = lower(:last_name) OR lower(aka.first_name) = lower(:last_name) OR lower(aka.last_name) =lower(:last_name) OR si.id_number = :id) ORDER BY se.first_name ASC ", nativeQuery = true)

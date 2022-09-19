@@ -37,23 +37,12 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-//import org.postgresql.copy.*;
-//import org.postgresql.copy.CopyManager;
-
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("data")
 public class DataController {
 
-    @Value("${sftp.user.name}")
-    private String sftpUser;
-
-    @Value("${sftp.user.password}")
-    private String sftpPassword;
-
-    @Value("${sftp.url}")
-    private String sftpUrl;
 
     @Autowired
     DataService dataService;
@@ -149,8 +138,15 @@ public class DataController {
         ChannelSftp channel = null;
         String message = "";
         try {
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
+            Map<String, String> systemParameter = dataService.getSystemParameter();
+            if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage(systemParameter.get("errorMessage"));
+                return response;
+            }
+            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+            session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = (ChannelSftp) session.openChannel("sftp");
@@ -225,95 +221,103 @@ public class DataController {
         return dataService.getReportList(input);
     }
 
-    @PostMapping(value = "/downloadReport", produces = "application/octet-stream")
-    public Object downloadReport(@RequestBody String input) throws Exception {
-        Session session = null;
-        ChannelSftp channel = null;
-        BufferedWriter writer = null;
-        ByteArrayResource resource = null;
-        HttpHeaders headers = new HttpHeaders();
-        String fileName = "Merchant Automation Screening OFAC - Summary Report - ";
-        String header = "EXTRACT DATE|OFAC LIST SCREENED|START DATE|END DATE|POTENTIAL|POSITIVE|TOTAL SCREENED|TOTAL DATA";
-        String value = "";
-        String path = "";
-        int report_id = 0;
-        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
-        List<Report> report = new ArrayList<>();
-        for (SystemParameter parameter : systemParameterList) {
-            if (parameter.getParameter_name().compareToIgnoreCase("pathReportFile") == 0) {
-                path = parameter.getParameter_value();
-            }
-        }
-        try {
-            JSONObject jsonInput = new JSONObject(input);
-            report_id = jsonInput.getInt("report_id");
-            Map<String, Object> auth = dataService.tokenAuthentication(jsonInput.optString("user_token"));
-            //Token Auth
-            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
-                BaseResponse response = new BaseResponse();
-                response.setStatus("401");
-                response.setSuccess(false);
-                response.setMessage("Token Authentication Failed");
-                return response;
-            }
-            String userOnProcess = auth.get("user_name").toString();
-            dataService.createLog(input, userOnProcess, "downloadReport");
-
-            report = reportRepository.getReportById(report_id);
-            String finalFilename = "";
-            if (report.size() > 0) {
-                value = value.concat(report.get(0).getExtract_date()).concat(",")
-                        .concat(report.get(0).getOfac_list_screened()).concat(",").concat(report.get(0).getStart_date().concat(","))
-                        .concat(report.get(0).getEnd_date().concat(",")).concat((report.get(0).getPotential()) + ",").concat((report.get(0).getPositive()) + ",")
-                        .concat(report.get(0).getTotal_screened() + ",").concat(report.get(0).getTotal_data() + "");
-                finalFilename = fileName.concat(report.get(0).getOfac_list_screened()).concat(" - ").concat(report.get(0).getExtract_date()).concat(".csv");
-
-            } else {
-                return ResponseEntity.notFound();
-            }
-
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
-            channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect();
-
-            writer = new BufferedWriter(new OutputStreamWriter(channel.put(path + finalFilename, 0)));
-            writer.write(header + "\r\n");
-            writer.flush();
-            writer.write(value);
-            writer.close();
-
-            resource = new ByteArrayResource(IOUtils.toByteArray(channel.get(path + finalFilename)));
+//    @PostMapping(value = "/downloadReport", produces = "application/octet-stream")
+//    public Object downloadReport(@RequestBody String input) throws Exception {
+//        Session session = null;
+//        ChannelSftp channel = null;
+//        BufferedWriter writer = null;
+//        ByteArrayResource resource = null;
+//        HttpHeaders headers = new HttpHeaders();
+//        String fileName = "Merchant Automation Screening OFAC - Summary Report - ";
+//        String header = "EXTRACT DATE|OFAC LIST SCREENED|START DATE|END DATE|POTENTIAL|POSITIVE|TOTAL SCREENED|TOTAL DATA";
+//        String value = "";
+//        String path = "";
+//        int report_id = 0;
+//        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+//        List<Report> report = new ArrayList<>();
+//        for (SystemParameter parameter : systemParameterList) {
+//            if (parameter.getParameter_name().compareToIgnoreCase("pathReportFile") == 0) {
+//                path = parameter.getParameter_value();
+//            }
+//        }
+//        try {
+//            JSONObject jsonInput = new JSONObject(input);
+//            report_id = jsonInput.getInt("report_id");
+//            Map<String, Object> auth = dataService.tokenAuthentication(jsonInput.optString("user_token"));
+//            //Token Auth
+//            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
+//                BaseResponse response = new BaseResponse();
+//                response.setStatus("401");
+//                response.setSuccess(false);
+//                response.setMessage("Token Authentication Failed");
+//                return response;
+//            }
+//            String userOnProcess = auth.get("user_name").toString();
+//            dataService.createLog(input, userOnProcess, "downloadReport");
 //
-            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-            headers.add("Pragma", "no-cache");
-            headers.add("Expires", "0");
-            headers.add("Content-Disposition", "attachment;filename=" + finalFilename);
-            headers.add("Access-Control-Expose-Headers", "Content-Disposition");
-
-            return ResponseEntity.ok()
-                    .headers(headers).contentLength(resource.contentLength())
-                    .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
-        } catch (Exception e) {
-            BaseResponse response = new BaseResponse();
-            logger.info("Exception : " + e.getMessage());
-            response.setMessage("cannot connect to SFTP");
-            response.setStatus("0");
-            response.setSuccess(false);
-            return response;
-        } finally {
-            if (session.isConnected() || session != null) {
-                session.disconnect();
-            }
-            if (channel.isConnected() || channel != null) {
-                channel.disconnect();
-            }
-
-        }
-
-    }
+//            report = reportRepository.getReportById(report_id);
+//            String finalFilename = "";
+//            if (report.size() > 0) {
+//                value = value.concat(report.get(0).getExtract_date()).concat(",")
+//                        .concat(report.get(0).getOfac_list_screened()).concat(",").concat(report.get(0).getStart_date().concat(","))
+//                        .concat(report.get(0).getEnd_date().concat(",")).concat((report.get(0).getPotential()) + ",").concat((report.get(0).getPositive()) + ",")
+//                        .concat(report.get(0).getTotal_screened() + ",").concat(report.get(0).getTotal_data() + "");
+//                finalFilename = fileName.concat(report.get(0).getOfac_list_screened()).concat(" - ").concat(report.get(0).getExtract_date()).concat(".csv");
+//
+//            } else {
+//                return ResponseEntity.notFound();
+//            }
+//
+//            Map<String, String> systemParameter = dataService.getSystemParameter();
+//            if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
+//                BaseResponse response = new BaseResponse();
+//                response.setStatus("500");
+//                response.setSuccess(false);
+//                response.setMessage(systemParameter.get("errorMessage"));
+//                return response;
+//            }
+//            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+//            session.setPassword(systemParameter.get("sftpPassword"));
+//            session.setConfig("StrictHostKeyChecking", "no");
+//            session.connect();
+//            channel = (ChannelSftp) session.openChannel("sftp");
+//            channel.connect();
+//
+//            writer = new BufferedWriter(new OutputStreamWriter(channel.put(path + finalFilename, 0)));
+//            writer.write(header + "\r\n");
+//            writer.flush();
+//            writer.write(value);
+//            writer.close();
+//
+//            resource = new ByteArrayResource(IOUtils.toByteArray(channel.get(path + finalFilename)));
+////
+//            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+//            headers.add("Pragma", "no-cache");
+//            headers.add("Expires", "0");
+//            headers.add("Content-Disposition", "attachment;filename=" + finalFilename);
+//            headers.add("Access-Control-Expose-Headers", "Content-Disposition");
+//
+//            return ResponseEntity.ok()
+//                    .headers(headers).contentLength(resource.contentLength())
+//                    .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
+//        } catch (Exception e) {
+//            BaseResponse response = new BaseResponse();
+//            logger.info("Exception : " + e.getMessage());
+//            response.setMessage("cannot connect to SFTP");
+//            response.setStatus("0");
+//            response.setSuccess(false);
+//            return response;
+//        } finally {
+//            if (session.isConnected() || session != null) {
+//                session.disconnect();
+//            }
+//            if (channel.isConnected() || channel != null) {
+//                channel.disconnect();
+//            }
+//
+//        }
+//
+//    }
 
     @GetMapping(value = "/getReportFile/{report_id}/{user_token}", produces = "application/octet-stream")
     public ResponseEntity<?> getReportFile(@PathVariable("report_id") int report_id, @PathVariable("user_token") String user_token) throws Exception {
@@ -388,8 +392,10 @@ public class DataController {
                 }
             }
 
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
+
+            Map<String, String> systemParameter = dataService.getSystemParameter();
+            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+            session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = (ChannelSftp) session.openChannel("sftp");
@@ -549,8 +555,9 @@ public class DataController {
             }
 
 
-            session = new JSch().getSession(sftpUser, sftpUrl, 22);
-            session.setPassword(sftpPassword);
+            Map<String, String> systemParameter = dataService.getSystemParameter();
+            session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
+            session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = (ChannelSftp) session.openChannel("sftp");
@@ -607,6 +614,44 @@ public class DataController {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
+        }
+
+        return response;
+    }
+
+    @GetMapping("/checkDownloadReport")
+    public BaseResponse<String> checkDownloadDetailReport() throws Exception, SQLException, ParseException, JSchException, JSONException {
+        logger.info("Check download report");
+        BaseResponse response = new BaseResponse();
+        try {
+            List<SummaryMatchingDetail> summaryMatchingDetailList = summaryMatchingDetailRepository.findAll();
+            if (summaryMatchingDetailList.size() > 0) {
+                logger.info("summary matching size : " + summaryMatchingDetailList.size());
+                for (int i = 0; i < summaryMatchingDetailList.size(); i++) {
+                    SummaryMatchingDetail summaryMatchingDetail = summaryMatchingDetailList.get(i);
+                    KTPDetail ktpDetail = ktpDetailRepository.getKTPDetailById(summaryMatchingDetail.getKtp_detail_id());
+                    SdnFile sdnFile = sdnFileRepository.getSdnFileByEntryId(summaryMatchingDetail.getSdn_entry_id());
+                    if (ktpDetail == null || sdnFile == null) {
+                        response.setStatus("500");
+                        response.setSuccess(false);
+                        response.setMessage("Can't download report detail");
+                        return response;
+                    }
+                }
+                response.setStatus("200");
+                response.setSuccess(true);
+                response.setMessage("Download process can be done");
+            } else {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage("Can't download report detail");
+                return response;
+            }
+        } catch (Exception e) {
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage("Can't download report detail");
+            return response;
         }
 
         return response;
