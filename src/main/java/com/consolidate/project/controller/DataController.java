@@ -76,6 +76,13 @@ public class DataController {
         response.setSuccess(true);
         response.setMessage("File upload on progress");
         logger.info("Upload file");
+        if (new JSONObject((input)).getString("file_name").split("\\.")[1].compareToIgnoreCase("xml") != 0) {
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage("Allowed file extension is XML");
+            logger.info("Allowed file extension is XML");
+            return response;
+        }
         executor.submit(() -> {
             try {
                 dataService.uploadSdnFile(input);
@@ -494,30 +501,44 @@ public class DataController {
             keyItem2++;
 
             //DATA PROCESS
+            List<Integer> ktpDetailIdSdn = new ArrayList<>();
+            List<Integer> ktpDetailIdConsolidate = new ArrayList<>();
             for (int i = 0; i < summaryMatchingDetailList.size(); i++) {
                 SummaryMatchingDetail summaryMatchingDetail = summaryMatchingDetailList.get(i);
                 KTPDetail ktpDetail = ktpDetailRepository.getKTPDetailById(summaryMatchingDetail.getKtp_detail_id());
                 SdnFile sdnFile = sdnFileRepository.getSdnFileByEntryId(summaryMatchingDetail.getSdn_entry_id());
-                if (sdnFile.getFile_type().compareToIgnoreCase("sdn") == 0) {
-                    if (summaryMatchingDetail.getMatching_status().compareToIgnoreCase("positive") == 0) {
+                if (sdnFile.getFile_type().compareToIgnoreCase("sdn") == 0 && summaryMatchingDetail.getMatching_status().compareToIgnoreCase("positive") == 0) {
+                    if (!ktpDetailIdSdn.contains(ktpDetail.getKtp_detail_id())) {
                         dataSdn.put(keyItem1, new Object[]{ktpDetail.getMerchant_no(), summaryMatchingDetail.getCreated_date().toString(), ktpDetail.getMerchant_name(),
                                 ktpDetail.getName_1(), ktpDetail.getName_2(), ktpDetail.getKtp_1(), ktpDetail.getKtp_2(), ktpDetail.getDob_1(), ktpDetail.getDob_2(), "N", "Y"});
-                    } else {
+                        keyItem1++;
+                        ktpDetailIdSdn.add(ktpDetail.getKtp_detail_id());
+                    }
+                } else if (sdnFile.getFile_type().compareToIgnoreCase("sdn") == 0 && summaryMatchingDetail.getMatching_status().compareToIgnoreCase("potential") == 0) {
+                    if (!ktpDetailIdSdn.contains(ktpDetail.getKtp_detail_id())) {
                         dataSdn.put(keyItem1, new Object[]{ktpDetail.getMerchant_no(), summaryMatchingDetail.getCreated_date().toString(), ktpDetail.getMerchant_name(),
                                 ktpDetail.getName_1(), ktpDetail.getName_2(), ktpDetail.getKtp_1(), ktpDetail.getKtp_2(), ktpDetail.getDob_1(), ktpDetail.getDob_2(), "Y", "N"});
+                        keyItem1++;
+                        ktpDetailIdSdn.add(ktpDetail.getKtp_detail_id());
                     }
-                    keyItem1++;
-                } else {
-                    if (summaryMatchingDetail.getMatching_status().compareToIgnoreCase("positive") == 0) {
+                } else if (sdnFile.getFile_type().compareToIgnoreCase("consal") == 0 && summaryMatchingDetail.getMatching_status().compareToIgnoreCase("positive") == 0) {
+                    if (!ktpDetailIdConsolidate.contains(ktpDetail.getKtp_detail_id())) {
                         dataConsolidate.put(keyItem2, new Object[]{ktpDetail.getMerchant_no(), summaryMatchingDetail.getCreated_date().toString(), ktpDetail.getMerchant_name(),
                                 ktpDetail.getName_1(), ktpDetail.getName_2(), ktpDetail.getKtp_1(), ktpDetail.getKtp_2(), ktpDetail.getDob_1(), ktpDetail.getDob_2(), "N", "Y"});
-                    } else {
+                        keyItem2++;
+                        ktpDetailIdConsolidate.add(ktpDetail.getKtp_detail_id());
+                    }
+                } else if (sdnFile.getFile_type().compareToIgnoreCase("consal") == 0 && summaryMatchingDetail.getMatching_status().compareToIgnoreCase("potential") == 0) {
+                    if (!ktpDetailIdConsolidate.contains(ktpDetail.getKtp_detail_id())) {
                         dataConsolidate.put(keyItem2, new Object[]{ktpDetail.getMerchant_no(), summaryMatchingDetail.getCreated_date().toString(), ktpDetail.getMerchant_name(),
                                 ktpDetail.getName_1(), ktpDetail.getName_2(), ktpDetail.getKtp_1(), ktpDetail.getKtp_2(), ktpDetail.getDob_1(), ktpDetail.getDob_2(), "Y", "N"});
+                        keyItem2++;
+                        ktpDetailIdConsolidate.add(ktpDetail.getKtp_detail_id());
                     }
-                    keyItem2++;
                 }
             }
+
+
             //SET VALUE TO EXCEL CELL
             Set<Integer> keyId1 = dataSdn.keySet();
             Set<Integer> keyId2 = dataConsolidate.keySet();

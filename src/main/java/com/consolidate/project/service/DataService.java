@@ -102,7 +102,7 @@ public class DataService {
 
     //FILE SECTION
 
-    @Async
+
     public void uploadSdnFile(String input) throws Exception {
         BaseResponse response = new BaseResponse();
         SdnFile sdnFile = new SdnFile();
@@ -112,14 +112,6 @@ public class DataService {
         try {
             JSONObject jsonInput = new JSONObject(input);
             String fileName = jsonInput.getString("file_name");
-            if (fileName.split("\\.")[1].compareToIgnoreCase("xml") != 0) {
-                response.setStatus("500");
-                response.setSuccess(false);
-                response.setMessage("Allowed file extension is XML");
-                logger.info("Allowed file extension is XML");
-                throw new Exception("Allowed file extension is XML");
-            }
-
 
             String file_type = jsonInput.getString("file_type");
             logger.info("Upload file : " + file_type.toUpperCase());
@@ -136,11 +128,11 @@ public class DataService {
             createLog(jsonInput.getString("file_name"), userOnProcess, "uploadFile");
             String file_type_name = "";
             if (file_type.compareToIgnoreCase("consal") == 0) {
-                file_type_name = "CONSOLIDATE";
+                file_type_name = "Consolidate";
             } else {
-                file_type_name = "SDN";
+                file_type_name = "Sdn";
             }
-            createNotification(userOnProcess + " uploading " + file_type_name + " : " + fileName + " on ");
+            createNotification("New " + file_type_name + " file is uploading by " + userOnProcess + " on ");
 
 
             Map<String, Object> fileTypeCheck = checkAllowedFileType(file_type);
@@ -669,7 +661,7 @@ public class DataService {
             }
             sdnFileRepository.updateFileStatus(currentSdnFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + fileName);
-            createNotification(file_type_name + " : " + fileName + " uploaded on ");
+            createNotification("New " + file_type_name + " file successfully uploaded by " + userOnProcess + " on ");
             inputStream.close();
             summaryMatchingDetailRepository.deleteAll();
 
@@ -698,7 +690,7 @@ public class DataService {
         int currentKTPFileId = 0;
         try {
             String file_type = "ktp";
-            createNotification("NEW KTP File uploading on ");
+            createNotification("New KTP File uploading on ");
 //            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
 //            //Token Auth
 //            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
@@ -819,7 +811,7 @@ public class DataService {
             inputStream.close();
             ktpFileRepository.updateFileStatus(currentKTPFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
-            createNotification("NEW KTP File uploaded on ");
+            createNotification("New KTP file successfully uploaded on ");
 
 
             response.setData(savedFileName);
@@ -849,7 +841,7 @@ public class DataService {
         int currentDMAFileId = 0;
         try {
             String file_type = "dma";
-            createNotification("NEW DMA File uploading on ");
+            createNotification("New DMA file uploading on ");
 //            Map<String, Object> auth = tokenAuthentication(jsonInput.optString("user_token"));
 //            //Token Auth
 //            if (Boolean.valueOf(auth.get("valid").toString()) == false) {
@@ -934,7 +926,7 @@ public class DataService {
             inputStream.close();
             dmaFileRepository.updateFileStatus(currentDMAFileId, "uploaded", " -uploading file success");
             logger.info("Uploading complete for  :" + file_name);
-            createNotification("NEW DMA File uploaded on ");
+            createNotification("New DMA file successfully uploaded on ");
 
 
             response.setData(savedFileName);
@@ -996,7 +988,7 @@ public class DataService {
                 searchSdnOri = sdnEntryRepository.searchDataNameId("sdn", first_name, last_name, id_number);
                 searchConsalOri = sdnEntryRepository.searchDataNameId("consal", first_name, last_name, id_number);
             } else {
-                dob = new SimpleDateFormat("dd MMM yyyy").format(new SimpleDateFormat("dd-MM-yyy").parse(dob));
+//                dob = new SimpleDateFormat("dd MMM yyyy").format(new SimpleDateFormat("dd-MM-yyy").parse(dob));
                 searchSdnOri = sdnEntryRepository.searchDataNameIdDob("sdn", first_name, last_name, id_number, dob);
                 searchConsalOri = sdnEntryRepository.searchDataNameIdDob("consal", first_name, last_name, id_number, dob);
             }
@@ -1106,6 +1098,7 @@ public class DataService {
                         }
                     }
                     dataSearch.put("header", headerData);
+                    dataSearch.put("entry", entry);
                     dataSearch.put("addrees", sdnAddressList);
                     dataSearch.put("aka", sdnAkaList);
                     dataSearch.put("citizenship", sdnCitizenshipList);
@@ -1172,6 +1165,7 @@ public class DataService {
                         }
                     }
                     dataSearch.put("header", headerData);
+                    dataSearch.put("entry", entry);
                     dataSearch.put("addrees", sdnAddressList);
                     dataSearch.put("aka", sdnAkaList);
                     dataSearch.put("citizenship", sdnCitizenshipList);
@@ -1569,6 +1563,12 @@ public class DataService {
         String pathSaveSdn;
         String pathSaveConsolidate;
         String pathReportFile;
+
+        String ldapUrl;
+        String ldapBase;
+        String ldapUserDn;
+        String ldapPassword;
+        String ldapPrefix;
         try {
             for (SystemParameter parameter : systemParameterList) {
                 if (parameter.getParameter_name().compareToIgnoreCase("sftpUser") == 0) {
@@ -1615,6 +1615,26 @@ public class DataService {
                 if (parameter.getParameter_name().compareToIgnoreCase("pathReportFile") == 0) {
                     pathReportFile = parameter.getParameter_value();
                     result.put("pathReportFile", pathReportFile);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapUrl") == 0) {
+                    ldapUrl = parameter.getParameter_value();
+                    result.put("ldapUrl", ldapUrl);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapBase") == 0) {
+                    ldapBase = parameter.getParameter_value();
+                    result.put("ldapBase", ldapBase);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapUserDn") == 0) {
+                    ldapUserDn = parameter.getParameter_value();
+                    result.put("ldapUserDn", ldapUserDn);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapPassword") == 0) {
+                    ldapPassword = parameter.getParameter_value();
+                    result.put("ldapPassword", ldapPassword);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapPrefix") == 0) {
+                    ldapPrefix = parameter.getParameter_value();
+                    result.put("ldapPrefix", ldapPrefix);
                 }
                 result.put("errorMessage", "");
 
@@ -1744,31 +1764,45 @@ public class DataService {
     public void matchingProcess() throws Exception {
         logger.info("Starting auto matching");
 //        int count = 0;
-        List<SdnFile> sdnFile = sdnFileRepository.getFileByStatus("uploaded", "sdn");
-        List<SdnFile> consalFile = sdnFileRepository.getFileByStatus("uploaded", "consal");
-        List<DMAFile> dmaFile = dmaFileRepository.getFileByStatus("uploaded");
-        List<KTPFile> ktpFile = ktpFileRepository.getFileByStatus("uploaded");
-//        if (sdnFile.size() > 0) {
-//            count++;
-//        }
-//        if (consalFile.size() > 0) {
-//            count++;
-//        }
-//        if (dmaFile.size() > 0) {
-//            count++;
-//        }
-//        if (ktpFile.size() > 0) {
-//            count++;
-//        }
-        if (sdnFile.size() > 0 && consalFile.size() > 0 && dmaFile.size() > 0 && ktpFile.size() > 0) {
+        List<SdnFile> sdnFileUploaded = sdnFileRepository.getFileByStatus("uploaded", "sdn");
+        List<SdnFile> consalFileUploaded = sdnFileRepository.getFileByStatus("uploaded", "consal");
+        List<DMAFile> dmaFileUploaded = dmaFileRepository.getFileByStatus("uploaded");
+        List<KTPFile> ktpFileUploaded = ktpFileRepository.getFileByStatus("uploaded");
+
+
+        List<SdnFile> sdnFileMatched = sdnFileRepository.getFileByStatus("matched", "sdn");
+        List<SdnFile> consalFileMatched = sdnFileRepository.getFileByStatus("matched", "consal");
+        List<DMAFile> dmaFileMatched = dmaFileRepository.getFileByStatus("matched");
+        List<KTPFile> ktpFileMatched = ktpFileRepository.getFileByStatus("matched");
+        if (sdnFileMatched.size() > 0 && consalFileMatched.size() > 0 && dmaFileMatched.size() > 0 && ktpFileMatched.size() > 0) {
+            logger.info("No matching process all needed file already matched");
+            return;
+
+        }
+
+        if ((sdnFileUploaded.size() > 0 || sdnFileMatched.size() > 0) && (consalFileUploaded.size() > 0 || consalFileMatched.size() > 0)
+                && (dmaFileUploaded.size() > 0 || dmaFileMatched.size() > 0) && (ktpFileUploaded.size() > 0) || ktpFileMatched.size() > 0) {
             createNotification("Matching process started on ");
 
             Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+
             //FILE - FILE ON MATCHING PROCESS
-            int sdnFileId = sdnFile.get(0).getSdnfile_id();
-            int consalFileId = consalFile.get(0).getSdnfile_id();
-            int dmaFileId = dmaFile.get(0).getDmafile_id();
-            int ktpFileId = ktpFile.get(0).getKtp_file_id();
+            int sdnFileId = sdnFileUploaded.get(0).getSdnfile_id();
+            if (sdnFileMatched.size() > 0) {
+                sdnFileId = sdnFileMatched.get(0).getSdnfile_id();
+            }
+            int consalFileId = consalFileUploaded.get(0).getSdnfile_id();
+            if (consalFileMatched.size() > 0) {
+                consalFileId = consalFileMatched.get(0).getSdnfile_id();
+            }
+            int dmaFileId = dmaFileUploaded.get(0).getDmafile_id();
+            if (dmaFileMatched.size() > 0) {
+                consalFileId = dmaFileMatched.get(0).getDmafile_id();
+            }
+            int ktpFileId = ktpFileUploaded.get(0).getKtp_file_id();
+            if (ktpFileMatched.size() > 0) {
+                consalFileId = ktpFileMatched.get(0).getKtp_file_id();
+            }
 
             //UPDATE STATUS FILES ON PROCESS
             sdnFileRepository.updateFileStatus(sdnFileId, "matching", " -matching process");

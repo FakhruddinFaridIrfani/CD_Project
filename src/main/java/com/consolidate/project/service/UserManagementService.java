@@ -5,12 +5,23 @@ import com.consolidate.project.repository.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Hashtable;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
+
 
 @Service
 public class UserManagementService {
@@ -29,6 +40,12 @@ public class UserManagementService {
 
     @Autowired
     PrivilegeRepository privilegeRepository;
+
+    @Autowired
+    DataService dataService;
+
+    @Autowired
+    LdapTemplate ldapTemplate;
 
     //User Section
     public BaseResponse<String> addUsers(String input) throws Exception {
@@ -248,6 +265,34 @@ public class UserManagementService {
             response.setStatus("200");
             response.setSuccess(true);
             response.setMessage("Login Success !!");
+        } catch (Exception e) {
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
+    }
+
+    public BaseResponse<Map<String, Object>> loginLDAP(String input) throws Exception, SQLException {
+        BaseResponse response = new BaseResponse();
+        Map<String, Object> result = new HashMap<>();
+        List<Users> dataLoginUser;
+        String user_name;
+        String user_password;
+        Map<String, String> systemParameter = dataService.getSystemParameter();
+        String ldapPrefix = systemParameter.get("ldapPrefix");
+        String ldapBase = systemParameter.get("ldapBase");
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            user_name = ldapPrefix + jsonInput.optString("user_name");
+            user_password = jsonInput.optString("user_password");
+            boolean isValid = ldapTemplate.authenticate(ldapBase, user_name, user_password);
+            result.put("authenticated : ", isValid);
+
+            response.setData(result);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("LDAP login Success !!");
         } catch (Exception e) {
             response.setStatus("500");
             response.setSuccess(false);
