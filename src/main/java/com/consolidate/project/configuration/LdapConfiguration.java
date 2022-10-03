@@ -18,10 +18,10 @@ public class LdapConfiguration {
     @Bean
     public LdapContextSource contextSource() throws Exception {
         LdapContextSource contextSource = new LdapContextSource();
-        contextSource.setUrl(dataService.getSystemParameter().get("ldapUrl"));
-        contextSource.setBase(dataService.getSystemParameter().get("ldapBase"));
-        contextSource.setUserDn(dataService.getSystemParameter().get("ldapUserDn"));
-        contextSource.setPassword(dataService.getSystemParameter().get("ldapPassword"));
+        contextSource.setUrl("LDAP://192.168.12.134:389");
+        contextSource.setBase("o=bni,dc=co,dc=id");
+        contextSource.setUserDn("cn=devldap3,cn=User,o=bni,dc=co,dc=id");
+        contextSource.setPassword("devldap1234");
         return contextSource;
     }
 

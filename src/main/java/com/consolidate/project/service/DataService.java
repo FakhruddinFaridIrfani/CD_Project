@@ -171,7 +171,7 @@ public class DataService {
 
             String savedFileName = "";
             logger.info("Saving " + fileName + "to SFTP . . .  . ");
-            BaseResponse<Map<String, String>> fileUploadProcess = addFile(fileName, fileData, "sdn");
+            BaseResponse<Map<String, String>> fileUploadProcess = addFile(fileName, fileData, file_type_name);
             if (fileUploadProcess.isSuccess() == true) {
                 savedFileName = fileUploadProcess.getData().get("file");
                 logger.info("saved");
@@ -212,7 +212,7 @@ public class DataService {
 //            logger.info("currentSdnFileId :  " + currentSdnFileId);
 
             //Parsing XML
-            byte[] b = Base64.getMimeDecoder().decode(getFile(savedFileName, "sdn").getData().get("file_base64").toString());
+            byte[] b = Base64.getMimeDecoder().decode(getFile(savedFileName, file_type_name).getData().get("file_base64").toString());
             InputStream inputStream = new ByteArrayInputStream(b);
             dbf.setNamespaceAware(false);
             Document doc = dbf.newDocumentBuilder().parse(inputStream);

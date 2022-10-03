@@ -17,6 +17,7 @@ import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
@@ -273,7 +274,66 @@ public class UserManagementService {
         return response;
     }
 
-    public BaseResponse<Map<String, Object>> loginLDAP(String input) throws Exception, SQLException {
+//    public BaseResponse<Map<String, Object>> loginLDAP(String input) throws Exception, SQLException {
+//        BaseResponse response = new BaseResponse();
+//        Map<String, Object> result = new HashMap<>();
+//        List<Users> dataLoginUser;
+//        String user_name;
+//        String user_password;
+//        Map<String, String> systemParameter = dataService.getSystemParameter();
+//        String ldapServer = systemParameter.get("ldapUrl");
+//        String ldapPrefix = systemParameter.get("ldapPrefix");
+//        String ldapBase = systemParameter.get("ldapBase");
+//        String ldapUserDn = systemParameter.get("ldapUserDn");
+//        String ldapPassword = systemParameter.get("ldapPassword");
+//        try {
+//            JSONObject jsonInput = new JSONObject(input);
+//            user_name = ldapPrefix + jsonInput.optString("user_name");
+//            user_password = jsonInput.optString("user_password");
+//            Hashtable<String, Object> env = new Hashtable<String, Object>();
+//            env.put(Context.SECURITY_AUTHENTICATION, "simple");
+//            if (ldapUserDn != null) {
+//                env.put(Context.SECURITY_PRINCIPAL, ldapUserDn);
+//            }
+//            if (ldapPassword != null) {
+//                env.put(Context.SECURITY_CREDENTIALS, ldapPassword);
+//            }
+//            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+//            env.put(Context.PROVIDER_URL, ldapServer);
+//            LdapContext ctx = new InitialLdapContext();
+//            String searchFilter = "(&(objectClass=user)(sAMAccountName=" + user_name + "))";
+//            SearchControls searchControls = new SearchControls();
+//            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+//            NamingEnumeration<SearchResult> results = ctx.search(ldapBase, searchFilter, searchControls);
+//            SearchResult searchResult = null;
+//            if (results.hasMoreElements()) {
+//                searchResult = (SearchResult) results.nextElement();
+//                //make sure there is not another item available, there should be only 1 match
+//                if (results.hasMoreElements()) {
+//                    response.setStatus("500");
+//                    response.setSuccess(false);
+//                    response.setMessage("Matched multiple users for the accountName: " + user_name);
+//                    return response;
+//                }
+//                result.put("authenticated : ", true);
+//            }
+//
+////            boolean isValid = ldapTemplate.authenticate(ldapBase, user_name, user_password);
+////            result.put("authenticated : ", isValid);
+//
+//            response.setData(result);
+//            response.setStatus("200");
+//            response.setSuccess(true);
+//            response.setMessage("LDAP login Success !!");
+//        } catch (Exception e) {
+//            response.setStatus("500");
+//            response.setSuccess(false);
+//            response.setMessage(e.getMessage());
+//        }
+//        return response;
+//    }
+
+    public BaseResponse<Map<String, Object>> loginLDAP2(String input) throws Exception, SQLException {
         BaseResponse response = new BaseResponse();
         Map<String, Object> result = new HashMap<>();
         List<Users> dataLoginUser;
@@ -286,14 +346,105 @@ public class UserManagementService {
             JSONObject jsonInput = new JSONObject(input);
             user_name = ldapPrefix + jsonInput.optString("user_name");
             user_password = jsonInput.optString("user_password");
+            result.put("Admin / Base Auth", false);
             boolean isValid = ldapTemplate.authenticate(ldapBase, user_name, user_password);
-            result.put("authenticated : ", isValid);
+            result.put("Admin / Base Auth", true);
+            result.put("User " + user_name + " Auth", isValid);
 
             response.setData(result);
             response.setStatus("200");
             response.setSuccess(true);
-            response.setMessage("LDAP login Success !!");
+            response.setMessage("Login LDAP");
         } catch (Exception e) {
+            result.put("Admin / Base Auth", false);
+            result.put("User Auth", false);
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
+    }
+
+    public BaseResponse<Map<String, Object>> loginLDAP(String input) throws Exception, SQLException {
+        BaseResponse response = new BaseResponse();
+        Map<String, Object> result = new HashMap<>();
+
+        List<Users> dataLoginUser;
+        String user_name = null;
+        String user_password;
+        String ldapServer;
+        String ldapBaseDN;
+        String ldapBase;
+        String ldapPrefix;
+        String ldapPassword;
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            ldapServer = jsonInput.optString("ldapServer");
+            ldapBaseDN = jsonInput.optString("ldapBaseDN");
+            ldapPrefix = jsonInput.optString("ldapPrefix");
+            ldapBase = jsonInput.optString("ldapBase");
+            ldapPassword = jsonInput.optString("ldapPassword");
+            user_name = ldapPrefix + jsonInput.optString("user_name");
+            user_password = jsonInput.optString("user_password");
+
+            Properties env = new Properties();
+            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            env.put(Context.SECURITY_AUTHENTICATION, "simple");
+            env.put(Context.PROVIDER_URL, ldapServer);
+            if (ldapBaseDN != null) {
+                env.put(Context.SECURITY_PRINCIPAL, ldapBaseDN);
+            }
+            if (ldapPassword != null) {
+                env.put(Context.SECURITY_CREDENTIALS, ldapPassword);
+            }
+
+            InitialDirContext ctx = new InitialDirContext(env);
+            if (ctx != null) {
+                result.put("Admin / Base Auth", true);
+            } else {
+                result.put("Admin / Base Auth", false);
+            }
+
+            SearchControls ctrls = new SearchControls();
+            ctrls.setReturningAttributes(new String[]{"givenName", "cn", "memberOf"});
+            ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+            NamingEnumeration<javax.naming.directory.SearchResult> answers = ctx.search("o=bni,dc=co,dc=id", "(uid=" + user_name + ")", ctrls);
+            javax.naming.directory.SearchResult searchResult = answers.nextElement();
+
+            String user = searchResult.getNameInNamespace();
+            env = new Properties();
+            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            env.put(Context.PROVIDER_URL, ldapServer);
+            env.put(Context.SECURITY_PRINCIPAL, user);
+            env.put(Context.SECURITY_CREDENTIALS, user_password);
+
+            ctx = new InitialDirContext(env);
+
+            if (ctx != null) {
+                result.put("User " + user_name + " Auth", true);
+            } else {
+                result.put("User " + user_name + " Auth", false);
+            }
+
+//            boolean isValid = ldapTemplate.authenticate(ldapBase, user_name, user_password);
+//            result.put("authenticated : ", isValid);
+
+            response.setData(result);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage("Login LDAP");
+        } catch (NamingException e) {
+            result.put("Admin / Base Auth", false);
+            result.put("User " + user_name + " Auth", false);
+            response.setData(result);
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        } catch (Exception e) {
+            result.put("Admin / Base Auth", false);
+            result.put("User  Auth", false);
+            response.setData(result);
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(e.getMessage());
