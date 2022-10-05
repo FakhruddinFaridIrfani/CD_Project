@@ -19,7 +19,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedWriter;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -145,7 +143,7 @@ public class DataController {
         ChannelSftp channel = null;
         String message = "";
         try {
-            Map<String, String> systemParameter = dataService.getSystemParameter();
+            Map<String, String> systemParameter = dataService.parseSystemParameter();
             if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -400,7 +398,7 @@ public class DataController {
             }
 
 
-            Map<String, String> systemParameter = dataService.getSystemParameter();
+            Map<String, String> systemParameter = dataService.parseSystemParameter();
             session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
             session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");
@@ -576,7 +574,7 @@ public class DataController {
             }
 
 
-            Map<String, String> systemParameter = dataService.getSystemParameter();
+            Map<String, String> systemParameter = dataService.parseSystemParameter();
             session = new JSch().getSession(systemParameter.get("sftpUser"), systemParameter.get("sftpUrl"), Integer.valueOf(systemParameter.get("sftpPort")));
             session.setPassword(systemParameter.get("sftpPassword"));
             session.setConfig("StrictHostKeyChecking", "no");

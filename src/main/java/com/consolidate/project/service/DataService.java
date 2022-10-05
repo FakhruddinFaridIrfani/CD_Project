@@ -8,8 +8,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -1205,7 +1203,7 @@ public class DataService {
         ChannelSftp channel = null;
         Map<String, String> imageAddResult = new HashMap<>();
         try {
-            Map<String, String> systemParameter = getSystemParameter();
+            Map<String, String> systemParameter = parseSystemParameter();
             if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1270,7 +1268,7 @@ public class DataService {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            Map<String, String> systemParameter = getSystemParameter();
+            Map<String, String> systemParameter = parseSystemParameter();
             if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
                 response.setStatus("500");
                 response.setSuccess(false);
@@ -1548,7 +1546,7 @@ public class DataService {
     }
 
     //SYSTEM PARAMETER PARSER
-    public Map<String, String> getSystemParameter() throws Exception {
+    public Map<String, String> parseSystemParameter() throws Exception {
         Map<String, String> result = new HashMap<>();
         List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
         String sftpUser;
@@ -1566,9 +1564,6 @@ public class DataService {
 
         String ldapUrl;
         String ldapBase;
-        String ldapUserDn;
-        String ldapPassword;
-        String ldapPrefix;
         try {
             for (SystemParameter parameter : systemParameterList) {
                 if (parameter.getParameter_name().compareToIgnoreCase("sftpUser") == 0) {
@@ -1624,18 +1619,6 @@ public class DataService {
                     ldapBase = parameter.getParameter_value();
                     result.put("ldapBase", ldapBase);
                 }
-                if (parameter.getParameter_name().compareToIgnoreCase("ldapUserDn") == 0) {
-                    ldapUserDn = parameter.getParameter_value();
-                    result.put("ldapUserDn", ldapUserDn);
-                }
-                if (parameter.getParameter_name().compareToIgnoreCase("ldapPassword") == 0) {
-                    ldapPassword = parameter.getParameter_value();
-                    result.put("ldapPassword", ldapPassword);
-                }
-                if (parameter.getParameter_name().compareToIgnoreCase("ldapPrefix") == 0) {
-                    ldapPrefix = parameter.getParameter_value();
-                    result.put("ldapPrefix", ldapPrefix);
-                }
                 result.put("errorMessage", "");
 
             }
@@ -1659,7 +1642,7 @@ public class DataService {
 
         if (onProcessKtpFile.size() == 0) {
             try {
-                Map<String, String> systemParameter = getSystemParameter();
+                Map<String, String> systemParameter = parseSystemParameter();
                 if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
                     return;
                 }
@@ -1715,7 +1698,7 @@ public class DataService {
 
         if (onProcessDmaFile.size() == 0) {
             try {
-                Map<String, String> systemParameter = getSystemParameter();
+                Map<String, String> systemParameter = parseSystemParameter();
                 if (systemParameter.get("errorMessage").compareToIgnoreCase("") != 0) {
                     return;
                 }
