@@ -61,11 +61,11 @@ public class UserController {
         return userManagementService.loginLDAP(input);
     }
 
-//    @PostMapping("/loginLDAP")
-//    public BaseResponse<Map<String, Object>> loginLDAP(@RequestBody String input) throws Exception, SQLException, ParseException {
-//        logger.info("Login user LDAP : " + new JSONObject(input).optString("user_name"));
-//        return userManagementService.loginLDAP(input);
-//    }
+    @PostMapping("/loginLDAP")
+    public BaseResponse<Map<String, Object>> loginLDAP(@RequestBody String input) throws Exception, SQLException, ParseException {
+        logger.info("Login user LDAP : " + new JSONObject(input).optString("user_name"));
+        return userManagementService.loginLDAP2(input);
+    }
 
 //    @PostMapping("/loginLDAP2")
 //    public BaseResponse<Map<String, Object>> loginLDAP2(@RequestBody String input) throws Exception, SQLException, ParseException {

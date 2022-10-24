@@ -3,6 +3,7 @@ package com.consolidate.project.service;
 import com.consolidate.project.model.*;
 import com.consolidate.project.repository.*;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,106 +269,68 @@ public class UserManagementService {
         return response;
     }
 
-//    public BaseResponse<Map<String, Object>> loginLDAP2(String input) throws Exception, SQLException {
-//        BaseResponse response = new BaseResponse();
-//        Map<String, Object> result = new HashMap<>();
-//        String message = "Line : ";
-//        List<Users> dataLoginUser;
-//        String user_name = null;
-//        String user_password;
-//        String ldapServer;
-//        String ldapBaseDN;
-//        String ldapBase;
-//        String ldapPrefix;
-//        String ldapPassword;
-//        try {
-//            JSONObject jsonInput = new JSONObject(input);
-//            ldapServer = jsonInput.optString("ldapServer");
-//            ldapBaseDN = jsonInput.optString("ldapBaseDN");
-//            ldapPrefix = jsonInput.optString("ldapPrefix");
-//            ldapBase = jsonInput.optString("ldapBase");
-//            ldapPassword = jsonInput.optString("ldapPassword");
-//            user_name = ldapPrefix + jsonInput.optString("user_name");
-//            user_password = jsonInput.optString("user_password");
-//
-//            Properties env = new Properties();
-//            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-//            env.put(Context.SECURITY_AUTHENTICATION, "simple");
-//            env.put(Context.PROVIDER_URL, ldapServer);
-//            if (ldapBaseDN != null) {
-//                message = "line : 342";
-//                env.put(Context.SECURITY_PRINCIPAL, ldapBaseDN);
-//            }
-//            if (ldapPassword != null) {
-//                message = "line : 345";
-//                env.put(Context.SECURITY_CREDENTIALS, ldapPassword);
-//            }
-//
-//            message = "line : 350";
-//            InitialDirContext ctx = new InitialDirContext(env);
-//            if (ctx != null) {
-//                logger.info("Admin / Base Auth :  true");
-//                message = "line : 354";
-//                result.put("Admin / Base Auth", true);
-//
-//            } else {
-//                logger.info("Admin / Base Auth :  false");
-//                message = "line : 359";
-//                result.put("Admin / Base Auth", false);
-//            }
-//            message = "line : 362";
-//            SearchControls ctrls = new SearchControls();
-//            ctrls.setReturningAttributes(new String[]{"givenName", "sn", "memberOf"});
-//            ctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-//
-//            message = "line : 367";
-//            NamingEnumeration<SearchResult> answers = ctx.search("o=bni,dc=co,dc=id", "(uid=" + user_name + ")", ctrls);
-//            SearchResult searchResult = answers.nextElement();
-//
-//            message = "line : 371";
-//            String user = searchResult.getNameInNamespace();
-//            logger.info("result user search : " + user);
-//            try {
-//                env = new Properties();
-//                env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-//                env.put(Context.PROVIDER_URL, ldapServer);
-//                env.put(Context.SECURITY_PRINCIPAL, user);
-//                env.put(Context.SECURITY_CREDENTIALS, user_password);
-//
-//                message = "line : 380";
-//                ctx = new InitialDirContext(env);
-//
-//                if (ctx != null) {
-//                    message = "line : 385";
-//                    result.put("User " + user_name + " Auth", true);
-//                } else {
-//                    message = "line : 388";
-//                    result.put("User " + user_name + " Auth", false);
-//                }
-//            } catch (NamingException e) {
-//                result.put("User " + user_name + " Auth", false);
-//            }
-//
-//
-//            response.setData(result);
-//            response.setStatus("200");
-//            response.setSuccess(true);
-//            response.setMessage(message + " - " + "Login LDAP");
-//        } catch (NamingException e) {
-//            result.put("Admin / Base Auth", false);
-//            response.setData(result);
-//            response.setStatus("500");
-//            response.setSuccess(false);
-//            response.setMessage(message + " - " + e.getMessage());
-//        } catch (Exception e) {
-//            result.put("Admin / Base Auth", false);
-//            response.setData(result);
-//            response.setStatus("500");
-//            response.setSuccess(false);
-//            response.setMessage(message + " - " + e.getMessage());
-//        }
-//        return response;
-//    }
+    public BaseResponse<Map<String, Object>> loginLDAP2(String input) throws Exception, SQLException {
+        BaseResponse response = new BaseResponse();
+        Map<String, Object> result = new HashMap<>();
+        String message = "Line : ";
+        List<Users> dataLoginUser;
+        String user_name;
+        String user_password;
+        String ldapServer;
+        String ldapBaseDN;
+        try {
+            JSONObject jsonInput = new JSONObject(input);
+            ldapServer = jsonInput.optString("ldapServer");
+            ldapBaseDN = jsonInput.optString("ldapBaseDN");
+            user_name = jsonInput.optString("user_name");
+            user_password = jsonInput.optString("user_password");
+            String ldapPrincipal = ldapBaseDN.replace("user_name", user_name);
+
+            Properties env = new Properties();
+            env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            env.put(Context.SECURITY_AUTHENTICATION, "simple");
+            env.put(Context.PROVIDER_URL, ldapServer);
+            if (ldapPrincipal != null) {
+                message = "line : 342";
+                env.put(Context.SECURITY_PRINCIPAL, ldapPrincipal);
+            }
+            if (user_password != null) {
+                message = "line : 345";
+                env.put(Context.SECURITY_CREDENTIALS, user_password);
+            }
+
+            message = "line : 350";
+            InitialDirContext ctx = new InitialDirContext(env);
+            if (ctx != null) {
+                logger.info("Auth :  true");
+                message = "line : 354";
+                result.put("Admin / Base Auth", true);
+
+            } else {
+                logger.info("Auth :  false");
+                message = "line : 359";
+                result.put("Admin / Base Auth", false);
+            }
+
+            response.setData(result);
+            response.setStatus("200");
+            response.setSuccess(true);
+            response.setMessage(message + " - " + "Login LDAP");
+        } catch (NamingException e) {
+            result.put("Auth", false);
+            response.setData(result);
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(message + " - " + e.getMessage());
+        } catch (Exception e) {
+            result.put("Auth", false);
+            response.setData(result);
+            response.setStatus("500");
+            response.setSuccess(false);
+            response.setMessage(message + " - " + e.getMessage());
+        }
+        return response;
+    }
 
     public BaseResponse<Map<String, Object>> loginLDAP(String input) throws Exception, SQLException {
         BaseResponse response = new BaseResponse();
@@ -378,12 +341,12 @@ public class UserManagementService {
         String user_password;
         String ldapServer;
         String ldapBase;
-        Map<String, String> systemParameter = dataService.parseSystemParameter();
+        Map<String, String> systemParameter = parseSystemParameter();
         try {
             JSONObject jsonInput = new JSONObject(input);
-            ldapServer = systemParameter.get("ldapServer");
+            ldapServer = systemParameter.get("ldapUrl");
             ldapBase = systemParameter.get("ldapBase");
-            user_name = jsonInput.optString("user_name");
+            user_name = jsonInput.getString("user_name");
             user_password = jsonInput.optString("user_password");
 
             String ldapPrincipal = ldapBase.replace("username", user_name);
@@ -393,29 +356,33 @@ public class UserManagementService {
             env.put(Context.SECURITY_AUTHENTICATION, "simple");
             env.put(Context.PROVIDER_URL, ldapServer);
             if (ldapPrincipal != null) {
-                message = "line : 443";
+                message = "line : 359";
                 env.put(Context.SECURITY_PRINCIPAL, ldapPrincipal);
             }
             if (user_password != null) {
-                message = "line : 447";
+                message = "line : 363";
                 env.put(Context.SECURITY_CREDENTIALS, user_password);
+            } else {
+                response.setStatus("500");
+                response.setSuccess(false);
+                response.setMessage("user password can't be empty string");
+                return response;
             }
 
-            message = "line : 451";
+            message = "line : 372";
             InitialDirContext ctx = new InitialDirContext(env);
             if (ctx != null) {
                 logger.info("Auth :  true");
-                message = "line : 455";
                 result.put("Auth", true);
                 responseLogin = loginUser(user_name);
                 response = responseLogin;
 
             } else {
                 logger.info("Auth :  false");
-                message = "line : 460";
+                message = "line : 382";
                 result.put("Auth", false);
                 response.setData(result);
-                response.setStatus("500");
+                response.setStatus("401");
                 response.setSuccess(false);
             }
 
@@ -426,10 +393,14 @@ public class UserManagementService {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(message + " - " + e.getMessage());
-            if (e.getMessage().contains("expired")) {
-                responseLogin = loginUser(new JSONObject(input).getString("user_name"));
-                response = responseLogin;
+            if (e.getMessage().toLowerCase().contains("invalid credentials")) {
+                response.setStatus("401");
+                response.setMessage("wrong username - password combination");
             }
+//            if (e.getMessage().toLowerCase().contains("expired")) {
+//                responseLogin = loginUser(new JSONObject(input).getString("user_name"));
+//                response = responseLogin;
+//            }
 
         } catch (Exception e) {
             result.put("Auth", false);
@@ -437,10 +408,14 @@ public class UserManagementService {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage(message + " - " + e.getMessage());
-            if (e.getMessage().contains("expired")) {
-                responseLogin = loginUser(new JSONObject(input).getString("user_name"));
-                response = responseLogin;
+            if (e.getMessage().toLowerCase().contains("invalid credentials")) {
+                response.setStatus("401");
+                response.setMessage("wrong username - password combination");
             }
+//            if (e.getMessage().toLowerCase().contains("expired")) {
+//                responseLogin = loginUser(new JSONObject(input).getString("user_name"));
+//                response = responseLogin;
+//            }
         }
         return response;
     }
@@ -502,7 +477,7 @@ public class UserManagementService {
         String user_name;
         String user_password;
         String new_user_password;
-        if (1<2){
+        if (1 < 2) {
             response.setStatus("500");
             response.setSuccess(false);
             response.setMessage("Can't change password here, contact your system administrator");
@@ -971,5 +946,89 @@ public class UserManagementService {
         sdnLoggerRepository.save(sdnLogger);
     }
 
+
+    //SYSTEM PARAMETER PARSER
+    public Map<String, String> parseSystemParameter() throws Exception {
+        Map<String, String> result = new HashMap<>();
+        List<SystemParameter> systemParameterList = systemParameterRepository.getSystemParameter();
+        String sftpUser;
+        String sftpPassword;
+        String sftpUrl;
+        String sftpPort;
+
+        String pathUploadKtp;
+        String pathUploadDma;
+        String pathSaveDma;
+        String pathSaveKtp;
+        String pathSaveSdn;
+        String pathSaveConsolidate;
+        String pathReportFile;
+
+        String ldapUrl;
+        String ldapBase;
+        try {
+            for (SystemParameter parameter : systemParameterList) {
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpUser") == 0) {
+                    sftpUser = parameter.getParameter_value();
+                    result.put("sftpUser", sftpUser);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpPassword") == 0) {
+                    sftpPassword = parameter.getParameter_value();
+                    result.put("sftpPassword", sftpPassword);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpUrl") == 0) {
+                    sftpUrl = parameter.getParameter_value();
+                    result.put("sftpUrl", sftpUrl);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("sftpPort") == 0) {
+                    sftpPort = parameter.getParameter_value();
+                    result.put("sftpPort", sftpPort);
+                }
+
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadKtp") == 0) {
+                    pathUploadKtp = parameter.getParameter_value();
+                    result.put("pathUploadKtp", pathUploadKtp);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathUploadDma") == 0) {
+                    pathUploadDma = parameter.getParameter_value();
+                    result.put("pathUploadDma", pathUploadDma);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveDma") == 0) {
+                    pathSaveDma = parameter.getParameter_value();
+                    result.put("pathSaveDma", pathSaveDma);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveKtp") == 0) {
+                    pathSaveKtp = parameter.getParameter_value();
+                    result.put("pathSaveKtp", pathSaveKtp);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveSdn") == 0) {
+                    pathSaveSdn = parameter.getParameter_value();
+                    result.put("pathSaveSdn", pathSaveSdn);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathSaveConsolidate") == 0) {
+                    pathSaveConsolidate = parameter.getParameter_value();
+                    result.put("pathSaveConsolidate", pathSaveConsolidate);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("pathReportFile") == 0) {
+                    pathReportFile = parameter.getParameter_value();
+                    result.put("pathReportFile", pathReportFile);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapUrl") == 0) {
+                    ldapUrl = parameter.getParameter_value();
+                    result.put("ldapUrl", ldapUrl);
+                }
+                if (parameter.getParameter_name().compareToIgnoreCase("ldapBase") == 0) {
+                    ldapBase = parameter.getParameter_value();
+                    result.put("ldapBase", ldapBase);
+                }
+                result.put("errorMessage", "");
+
+            }
+        } catch (Exception e) {
+            result.put("errorMessage", e.getMessage());
+        }
+
+        return result;
+    }
 
 }

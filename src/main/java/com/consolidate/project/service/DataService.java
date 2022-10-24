@@ -1653,7 +1653,7 @@ public class DataService {
                 channel = (ChannelSftp) session.openChannel("sftp");
                 channel.connect();
                 String fileName = "";
-                String filePathUploadKtp = systemParameter.get("filePathUploadKtp");
+                String filePathUploadKtp = systemParameter.get("pathUploadKtp");
                 Vector<ChannelSftp.LsEntry> dataKtpFile = channel.ls(filePathUploadKtp);
                 for (ChannelSftp.LsEntry lsEntry : dataKtpFile) {
                     if (!lsEntry.getAttrs().isDir()) {
@@ -1760,7 +1760,6 @@ public class DataService {
         if (sdnFileMatched.size() > 0 && consalFileMatched.size() > 0 && dmaFileMatched.size() > 0 && ktpFileMatched.size() > 0) {
             logger.info("No matching process all needed file already matched");
             return;
-
         }
 
         if ((sdnFileUploaded.size() > 0 || sdnFileMatched.size() > 0) && (consalFileUploaded.size() > 0 || consalFileMatched.size() > 0)
@@ -1770,21 +1769,29 @@ public class DataService {
             Date newInputDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
             //FILE - FILE ON MATCHING PROCESS
-            int sdnFileId = sdnFileUploaded.get(0).getSdnfile_id();
-            if (sdnFileMatched.size() > 0) {
+            int sdnFileId = 0;
+            if (sdnFileUploaded.size() > 0) {
+                sdnFileId = sdnFileUploaded.get(0).getSdnfile_id();
+            } else if (sdnFileMatched.size() > 0) {
                 sdnFileId = sdnFileMatched.get(0).getSdnfile_id();
             }
-            int consalFileId = consalFileUploaded.get(0).getSdnfile_id();
+            int consalFileId = 0;
             if (consalFileMatched.size() > 0) {
                 consalFileId = consalFileMatched.get(0).getSdnfile_id();
+            } else if (consalFileUploaded.size() > 0) {
+                consalFileId = consalFileUploaded.get(0).getSdnfile_id();
             }
-            int dmaFileId = dmaFileUploaded.get(0).getDmafile_id();
+            int dmaFileId = 0;
             if (dmaFileMatched.size() > 0) {
-                consalFileId = dmaFileMatched.get(0).getDmafile_id();
+                dmaFileId = dmaFileMatched.get(0).getDmafile_id();
+            } else if (dmaFileUploaded.size() > 0) {
+                dmaFileId = dmaFileUploaded.get(0).getDmafile_id();
             }
-            int ktpFileId = ktpFileUploaded.get(0).getKtp_file_id();
+            int ktpFileId = 0;
             if (ktpFileMatched.size() > 0) {
-                consalFileId = ktpFileMatched.get(0).getKtp_file_id();
+                ktpFileId = ktpFileMatched.get(0).getKtp_file_id();
+            } else if (ktpFileUploaded.size() > 0) {
+                ktpFileId = ktpFileUploaded.get(0).getKtp_file_id();
             }
 
             //UPDATE STATUS FILES ON PROCESS

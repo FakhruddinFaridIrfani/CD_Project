@@ -25,10 +25,4 @@ public interface PrivilegeRepository extends JpaRepository<Privilege, Integer> {
     @Modifying
     @Query(value = "INSERT INTO ofac.privilege (status,role_id,menu_name,created_by,created_date,updated_by,updated_date) VALUES ('active',:role_id,'[]','SYSTEM',current_timestamp,'SYSTEM',current_timestamp)", nativeQuery = true)
     void insertGeneralMenuName(@Param("role_id") int role_id);
-
-//    @Query(value = "SELECT priv.* FROM ofac.privilege priv " +
-//            "INNER JOIN ofac.role ro ON ro.role_id = priv.role_id " +
-//            "Where ro.status = 'active'", nativeQuery = true)
-//    List<Privilege> getAllPrivilege();
-
 }

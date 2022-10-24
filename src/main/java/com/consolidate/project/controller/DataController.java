@@ -485,7 +485,7 @@ public class DataController {
             keyItem1++;
             dataSdn.put(keyItem1, new Object[]{""});
             keyItem1++;
-            dataSdn.put(keyItem1, new Object[]{"MERCHANT ID", "PROCESS DATE", "MERCHANT NAME", "MERCHANT ACCOUNT NAME 1", "MERCHANT ACCOUNT NAME 2",
+            dataSdn.put(keyItem1, new Object[]{"MERCHANT ID", "PROCESS DATE", "MERCHANT NAME", "FIRST NAME", "LAST NAME",
                     "ID NUMBER 1", "ID NUMBER 2", "DOB 1", "DOB 2", "POTENTIAL", "POSITIVE"});
             keyItem1++;
 
@@ -494,7 +494,7 @@ public class DataController {
             keyItem2++;
             dataConsolidate.put(keyItem2, new Object[]{""});
             keyItem2++;
-            dataConsolidate.put(keyItem2, new Object[]{"MERCHANT ID", "PROCESS DATE", "MERCHANT NAME", "MERCHANT ACCOUNT NAME 1", "MERCHANT ACCOUNT NAME 2",
+            dataConsolidate.put(keyItem2, new Object[]{"MERCHANT ID", "PROCESS DATE", "MERCHANT NAME", "FIRST NAME", "LAST NAME",
                     "ID NUMBER 1", "ID NUMBER 2", "DOB 1", "DOB 2", "POTENTIAL", "POSITIVE"});
             keyItem2++;
 
