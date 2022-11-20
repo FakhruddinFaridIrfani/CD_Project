@@ -117,6 +117,51 @@ public class DataController {
         return response;
     }
 
+//    @PostMapping("/uploadFileManualAlt")
+//    public BaseResponse<String> uploadFileManualAlt(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+//
+//        BaseResponse response = new BaseResponse();
+//        try {
+//            JSONObject jsonInput = new JSONObject(input);
+//            String file_type = jsonInput.getString("file_type");
+//            if (file_type.compareToIgnoreCase("ktp") == 0) {
+//                dataService.scheduledUploadKtpFile();
+//            } else if (file_type.compareToIgnoreCase("dma") == 0) {
+//                dataService.scheduledUploadDmaFile2();
+//            }
+//            response.setSuccess(true);
+//            response.setStatus("200");
+//            response.setMessage("manual upload success");
+//        } catch (Exception e) {
+//            response.setSuccess(false);
+//            response.setStatus("500");
+//            response.setMessage("Failed to upload : " + e.getMessage());
+//        }
+//        return response;
+//    }
+//    @PostMapping("/uploadFileManualAlt2")
+//    public BaseResponse<String> uploadFileManualAlt2(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
+//
+//        BaseResponse response = new BaseResponse();
+//        try {
+//            JSONObject jsonInput = new JSONObject(input);
+//            String file_type = jsonInput.getString("file_type");
+//            if (file_type.compareToIgnoreCase("ktp") == 0) {
+//                dataService.scheduledUploadKtpFile();
+//            } else if (file_type.compareToIgnoreCase("dma") == 0) {
+//                dataService.scheduledUploadDmaFile3();
+//            }
+//            response.setSuccess(true);
+//            response.setStatus("200");
+//            response.setMessage("manual upload success");
+//        } catch (Exception e) {
+//            response.setSuccess(false);
+//            response.setStatus("500");
+//            response.setMessage("Failed to upload : " + e.getMessage());
+//        }
+//        return response;
+//    }
+
     @PostMapping("/checkUpload")
     public BaseResponse<String> checkUpload(@RequestBody String input) throws Exception, SQLException, ParseException, JSchException, JSONException {
         logger.info("Check file on process");

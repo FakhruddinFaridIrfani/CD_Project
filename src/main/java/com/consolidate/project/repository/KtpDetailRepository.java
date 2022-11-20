@@ -24,4 +24,8 @@ public interface KtpDetailRepository extends JpaRepository<KTPDetail, Integer> {
     @Query(value = "SELECT * FROM ofac.ktp_detail WHERE ktp_detail_id = :ktp_detail_id", nativeQuery = true)
     KTPDetail getKTPDetailById(@Param("ktp_detail_id") int ktp_detail_id);
 
+    @Modifying
+    @Query(value ="TRUNCATE TABLE ofac.ktp_detail RESTART IDENTITY CASCADE;" ,nativeQuery = true)
+    void deleteAllAndResetIdentity();
+
 }
